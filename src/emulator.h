@@ -9,6 +9,7 @@ using namespace BinaryNinja;
 constexpr auto plugin_name = "plugin.bnil_emulator";
 
 enum ret_val_type : uint8_t {
+	UNIMPL,
 	UINT64_T,
 	UINT32_T,
 };
@@ -34,7 +35,7 @@ typedef struct emuVairable {
 } emuVariable;
 
 typedef struct stackFrame {
-	void *stack;
+	void* stack;
 	Ref<LowLevelILFunction> current_function;
 	uint64_t curr_instr_idx;
 } stackFrame;
@@ -48,6 +49,7 @@ class EmulatorState {
 	std::stack<stackFrame> callstack;
 
 public:
+	Ref<Logger> log;
 	EmulatorState(BinaryView* bv);
 	~EmulatorState();
 

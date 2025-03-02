@@ -3,11 +3,11 @@
 
 EmulatorState::EmulatorState(BinaryNinja::BinaryView* bv)
 {
-	const auto log = BinaryNinja::LogRegistry::GetLogger(plugin_name);
+	this->log = BinaryNinja::LogRegistry::GetLogger(plugin_name);
 
 	for (const BinaryNinja::Ref<BinaryNinja::Segment>& segment : bv->GetSegments()) {
 		this->memory.push_back({ new uint8_t[segment->GetLength()], segment->GetStart(), segment->GetEnd() });
-		log->LogDebug("Start: 0x%llx - End: 0x%llx", segment->GetStart(), segment->GetEnd(), segment->GetFlags());
+		this->log->LogDebug("Start: 0x%llx - End: 0x%llx", segment->GetStart(), segment->GetEnd(), segment->GetFlags());
 	}
 	this->bv = bv;
 };
@@ -81,14 +81,9 @@ bool EmulatorState::isFunctionThunk(uint64_t address) const
 void EmulatorState::call_function(uint64_t func_addr, uint64_t retInstrIdx)
 {
 	const auto log = BinaryNinja::LogRegistry::GetLogger(plugin_name);
-
-	// Add all mlil variables to variable map
-	auto result_list = this->bv->GetAnalysisFunctionsForAddress(func_addr);
-	if (result_list.size() == 0) {
-		log->LogError("Unknown Function @ 0x%llx", func_addr);
-	}
-	const auto &func = result_list.front();
-	auto* vars = new std::unordered_map<uint64_t, emuVariable>;
+	auto func = this->bv->GetAnalysisFunction(this->bv->GetDefaultPlatform(), func_addr);
+	auto llil_func = func->GetLowLevelIL();
+	this->callstack.emplace(stackFrame { .current_function = llil_func });
 }
 
 void EmulatorState::return_from_function()
@@ -106,24 +101,61 @@ ret_val EmulatorState::visit(const struct LowLevelILInstruction* instr)
 	log->LogDebug("\tVisiting LLIL_OP [%d] @ 0x%llx", instr->operation, instr->address);
 
 	switch (instr->operation) {
-		case LLIL_INTRINSIC: return visit_LLIL_INTRINSIC(this, instr);
-		case LLIL_TAILCALL: return visit_LLIL_TAILCALL(this, instr);
-		case LLIL_NORET: return visit_LLIL_NORET(this, instr);
-		case LLIL_JUMP: return visit_LLIL_JUMP(this, instr);
-		case LLIL_CALL: return visit_LLIL_CALL(this, instr);
-		case LLIL_RET: return visit_LLIL_RET(this, instr);
-		case LLIL_UNDEF: return visit_LLIL_UNDEF(this, instr);
 		case LLIL_SET_REG: return visit_LLIL_SET_REG(this, instr);
-		case LLIL_IF: return visit_LLIL_IF(this, instr);
-		case LLIL_GOTO: return visit_LLIL_GOTO(this, instr);
-		case LLIL_JUMP_TO: return visit_LLIL_JUMP_TO(this, instr);
 		case LLIL_SET_REG_SPLIT: return visit_LLIL_SET_REG_SPLIT(this, instr);
 		case LLIL_SET_FLAG: return visit_LLIL_SET_FLAG(this, instr);
+		case LLIL_LOAD: return visit_LLIL_LOAD(this, instr);
 		case LLIL_STORE: return visit_LLIL_STORE(this, instr);
 		case LLIL_PUSH: return visit_LLIL_PUSH(this, instr);
+		case LLIL_POP: return visit_LLIL_POP(this, instr);
+		case LLIL_REG: return visit_LLIL_REG(this, instr);
+		case LLIL_REG_SPLIT: return visit_LLIL_REG_SPLIT(this, instr);
+		case LLIL_CONST: return visit_LLIL_CONST(this, instr);
+		case LLIL_CONST_PTR: return visit_LLIL_CONST_PTR(this, instr);
+		case LLIL_FLAG: return visit_LLIL_FLAG(this, instr);
+		case LLIL_ADD: return visit_LLIL_ADD(this, instr);
+		case LLIL_SUB: return visit_LLIL_SUB(this, instr);
+		case LLIL_SBB: return visit_LLIL_SBB(this, instr);
+		case LLIL_AND: return visit_LLIL_AND(this, instr);
+		case LLIL_OR: return visit_LLIL_OR(this, instr);
+		case LLIL_XOR: return visit_LLIL_XOR(this, instr);
+		case LLIL_LSL: return visit_LLIL_LSL(this, instr);
+		case LLIL_LSR: return visit_LLIL_LSR(this, instr);
+		case LLIL_ASR: return visit_LLIL_ASR(this, instr);
+		case LLIL_MUL: return visit_LLIL_MUL(this, instr);
+		case LLIL_DIVU_DP: return visit_LLIL_DIVU_DP(this, instr);
+		case LLIL_DIVS_DP: return visit_LLIL_DIVS_DP(this, instr);
+		case LLIL_MODU_DP: return visit_LLIL_MODU_DP(this, instr);
+		case LLIL_MODS_DP: return visit_LLIL_MODS_DP(this, instr);
+		case LLIL_NEG: return visit_LLIL_NEG(this, instr);
+		case LLIL_SX: return visit_LLIL_SX(this, instr);
+		case LLIL_ZX: return visit_LLIL_ZX(this, instr);
+		case LLIL_LOW_PART: return visit_LLIL_LOW_PART(this, instr);
+		case LLIL_JUMP: return visit_LLIL_JUMP(this, instr);
+		case LLIL_JUMP_TO: return visit_LLIL_JUMP_TO(this, instr);
+		case LLIL_CALL: return visit_LLIL_CALL(this, instr);
+		case LLIL_TAILCALL: return visit_LLIL_TAILCALL(this, instr);
+		case LLIL_RET: return visit_LLIL_RET(this, instr);
+		case LLIL_NORET: return visit_LLIL_NORET(this, instr);
+		case LLIL_IF: return visit_LLIL_IF(this, instr);
+		case LLIL_GOTO: return visit_LLIL_GOTO(this, instr);
+		case LLIL_CMP_E: return visit_LLIL_CMP_E(this, instr);
+		case LLIL_CMP_NE: return visit_LLIL_CMP_NE(this, instr);
+		case LLIL_CMP_SLT: return visit_LLIL_CMP_SLT(this, instr);
+		case LLIL_CMP_ULT: return visit_LLIL_CMP_ULT(this, instr);
+		case LLIL_CMP_SLE: return visit_LLIL_CMP_SLE(this, instr);
+		case LLIL_CMP_ULE: return visit_LLIL_CMP_ULE(this, instr);
+		case LLIL_CMP_SGE: return visit_LLIL_CMP_SGE(this, instr);
+		case LLIL_CMP_UGE: return visit_LLIL_CMP_UGE(this, instr);
+		case LLIL_CMP_SGT: return visit_LLIL_CMP_SGT(this, instr);
+		case LLIL_CMP_UGT: return visit_LLIL_CMP_UGT(this, instr);
+		case LLIL_TEST_BIT: return visit_LLIL_TEST_BIT(this, instr);
+		case LLIL_INTRINSIC: return visit_LLIL_INTRINSIC(this, instr);
+		case LLIL_UNDEF: return visit_LLIL_UNDEF(this, instr);
 		default: {
 			const auto log = BinaryNinja::LogRegistry::GetLogger(plugin_name);
 			log->LogError("[*] Unhandled LLIL_OP [%d] @ 0x%llx\n", instr->operation, instr->address);
+			return { .discriminator = UNIMPL };
 		} break;
 	}
 }
