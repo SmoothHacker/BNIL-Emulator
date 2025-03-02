@@ -1,5 +1,5 @@
 ---
-Checks:          'clang-diagnostic-*,clang-analyzer-*,-*,clang*,performance-*,bugprone-*,misc-*,-misc-include-cleaner,-bugprone-macro-parenthesis'
+Checks:          'clang-diagnostic-*,clang-analyzer-*,-*,clang*,performance-*,bugprone-*,misc-*,-misc-include-cleaner,-bugprone-macro-parenthesis,-bugprone-easily-swappable-parameters'
 WarningsAsErrors: ''
 HeaderFileExtensions:
   - ''

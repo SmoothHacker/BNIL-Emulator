@@ -81,9 +81,9 @@ bool EmulatorState::isFunctionThunk(uint64_t address) const
 void EmulatorState::call_function(uint64_t func_addr, uint64_t retInstrIdx)
 {
 	const auto log = BinaryNinja::LogRegistry::GetLogger(plugin_name);
-	auto func = this->bv->GetAnalysisFunction(this->bv->GetDefaultPlatform(), func_addr);
+	const auto func = this->bv->GetAnalysisFunction(this->bv->GetDefaultPlatform(), func_addr);
 	auto llil_func = func->GetLowLevelIL();
-	this->callstack.emplace(stackFrame { .current_function = llil_func });
+	this->callstack.emplace(stackFrame { .current_function = llil_func, .curr_instr_idx = retInstrIdx });
 }
 
 void EmulatorState::return_from_function()
