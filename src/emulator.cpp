@@ -3,7 +3,21 @@
 
 void EmulatorState::setRegister(const uint32_t reg, const ret_val value)
 {
-	this->regs[reg] = value.val_u64;
+	this->regs[reg] = value.value;
+}
+
+Ref<BinaryView> EmulatorState::getBinaryView()
+{
+	return this->bv;
+}
+
+void EmulatorState::dumpRegisters()
+{
+	const auto arch = this->bv->GetDefaultArchitecture();
+	this->log->LogInfo("Dumping registers:");
+	for (const auto& [reg, value] : this->regs) {
+		this->log->LogInfo("\t%s : 0x%lx", arch->GetRegisterName(reg).c_str(), this->regs[reg]);
+	}
 }
 
 EmulatorState::EmulatorState(BinaryView* bv)
@@ -19,7 +33,7 @@ EmulatorState::EmulatorState(BinaryView* bv)
 
 void EmulatorState::printCallstack()
 {
-	const auto log = LogRegistry::GetLogger(plugin_name);
+	const auto log = this->log;
 	log->LogDebug("Emulator Callstack Dump\n");
 
 	for (int i = 0; !this->callstack.empty(); i++) {
@@ -77,7 +91,7 @@ bool EmulatorState::isFunctionThunk(const uint64_t address) const
 	// Check if the address belongs to a section in the bv that had read-only permissions
 	const auto sections = this->bv->GetSectionsAt(address);
 	for (const auto& section : sections) {
-		if (section->GetSemantics() == ReadOnlyCodeSectionSemantics)
+		if (section->GetSemantics() == ReadOnlyDataSectionSemantics)
 			return false;
 	}
 	return true;

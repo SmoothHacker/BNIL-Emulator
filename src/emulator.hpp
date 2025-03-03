@@ -1,6 +1,7 @@
 #pragma once
 #include "lowlevelilinstruction.h"
 
+#include <memory>
 #include <stack>
 #include <vector>
 using namespace BinaryNinja;
@@ -19,24 +20,23 @@ enum ret_val_type : uint8_t {
 typedef struct ret_val {
 	ret_val_type discriminator;
 	union {
-		uint64_t val_u64;
-		int64_t value = 0;
+		uint64_t value = 0;
 	};
 } ret_val;
 
 typedef struct memSegment {
 	uint8_t* mem;
-	uint64_t startaddr;
+	uint64_t startAddr;
 	uint64_t endAddr;
 } mem_segment;
 
-typedef struct emuVairable {
+typedef struct emuVariable {
 	Variable var;
 	void* data;
 } emuVariable;
 
 typedef struct stackFrame {
-	std::stack<uint64_t> stack;
+	uint8_t* stack;
 	Ref<LowLevelILFunction> current_function;
 	uint64_t curr_instr_idx;
 } stackFrame;
@@ -48,11 +48,13 @@ class EmulatorState {
 	std::vector<mem_segment> memory; // segments->memory_page
 	Ref<BinaryView> bv;
 	std::stack<stackFrame> callstack;
-	std::unordered_map<uint32_t, uint64_t> regs;
+	std::map<uint32_t, uint64_t> regs;
 
 public:
 	[[nodiscard]] stackFrame getTopCallstack() const { return callstack.top(); }
 	void setRegister(uint32_t reg, ret_val value);
+	Ref<BinaryView> getBinaryView();
+	void dumpRegisters();
 
 	Ref<Logger> log;
 	explicit EmulatorState(BinaryView* bv);

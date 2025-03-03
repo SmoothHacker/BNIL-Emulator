@@ -3,8 +3,8 @@
 ret_val visit_LLIL_SET_REG(EmulatorState* emu, const LowLevelILInstruction* instr)
 {
 	emu->log->LogError("LLIL_SET_REG @ 0x%lx is unimplemented", instr->address);
-	const auto reg = instr->GetSourceRegister<LLIL_SET_REG>();
-	const auto src = instr->GetDestExpr<LLIL_SET_REG>();
+	const auto reg = instr->GetDestRegister<LLIL_SET_REG>();
+	const auto src = instr->GetSourceExpr<LLIL_SET_REG>();
 	const auto value = emu->visit(&src);
 	emu->setRegister(reg, value);
 	return ret_val { .discriminator = UNIMPL };
@@ -36,10 +36,15 @@ ret_val visit_LLIL_STORE(EmulatorState* emu, const LowLevelILInstruction* instr)
 
 ret_val visit_LLIL_PUSH(EmulatorState* emu, const LowLevelILInstruction* instr)
 {
-	stackFrame sf = emu->getTopCallstack();
+	const stackFrame sf = emu->getTopCallstack();
 	const auto srcExpr = instr->GetSourceExpr<LLIL_PUSH>();
 	ret_val const pushVal = emu->visit(&srcExpr);
-	sf.stack.emplace(pushVal.val_u64);
+
+	// get stack pointer
+	const auto arch = emu->getBinaryView()->GetDefaultArchitecture();
+	const auto sp = arch->GetStackPointerRegister();
+	sf.stack[sp] = pushVal.value;
+	emu->setRegister(sp, { .value = sp + arch->GetDefaultIntegerSize() });
 	return { .discriminator = UINT32_T, .value = 0 };
 }
 
