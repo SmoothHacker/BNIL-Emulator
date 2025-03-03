@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.14 FATAL_ERROR)
 project(bnil_emulator)
 
 # Create plugin executable target
-file(GLOB BN_API_SOURCES src/*.cpp src/*.h)
+file(GLOB BN_API_SOURCES CONFIGURE_DEPENDS src/*.cpp src/*.hpp)
 add_executable(bnil_emulator ${BN_API_SOURCES})
 
 target_compile_features(bnil_emulator PRIVATE cxx_std_17)

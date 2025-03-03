@@ -1,24 +1,29 @@
-#include "emulator.h"
-#include "llil_visitor.h"
+#include "emulator.hpp"
+#include "llil_visitor.hpp"
 
-EmulatorState::EmulatorState(BinaryNinja::BinaryView* bv)
+void EmulatorState::setRegister(const uint32_t reg, const ret_val value)
 {
-	this->log = BinaryNinja::LogRegistry::GetLogger(plugin_name);
+	this->regs[reg] = value.val_u64;
+}
 
-	for (const BinaryNinja::Ref<BinaryNinja::Segment>& segment : bv->GetSegments()) {
+EmulatorState::EmulatorState(BinaryView* bv)
+{
+	this->log = LogRegistry::GetLogger(plugin_name);
+
+	for (const Ref<Segment>& segment : bv->GetSegments()) {
 		this->memory.push_back({ new uint8_t[segment->GetLength()], segment->GetStart(), segment->GetEnd() });
 		this->log->LogDebug("Start: 0x%llx - End: 0x%llx", segment->GetStart(), segment->GetEnd(), segment->GetFlags());
 	}
 	this->bv = bv;
-};
+}
 
 void EmulatorState::printCallstack()
 {
-	const auto log = BinaryNinja::LogRegistry::GetLogger(plugin_name);
+	const auto log = LogRegistry::GetLogger(plugin_name);
 	log->LogDebug("Emulator Callstack Dump\n");
 
 	for (int i = 0; !this->callstack.empty(); i++) {
-		auto currFrame = this->callstack.top();
+		const auto currFrame = this->callstack.top();
 
 		// Get function name
 		const std::string funcName = currFrame.current_function->GetFunction()->GetSymbol()->GetFullName();
@@ -42,14 +47,14 @@ EmulatorState::~EmulatorState()
 
 void EmulatorState::emulate_llil(const Ref<LowLevelILFunction>& llil_func)
 {
-	const auto log = BinaryNinja::LogRegistry::GetLogger(plugin_name);
-	this->call_function(llil_func->GetFunction()->GetStart(), -1);
+	const auto log = this->log;
+	this->call_function(llil_func->GetFunction()->GetStart(), 0);
 
 	ret_val ret;
 	// Fetch instructions and begin execution
 	do {
 		// Fetch IL instruction
-		auto curr_function = this->callstack.top();
+		const auto curr_function = this->callstack.top();
 		const uint64_t instr_idx = curr_function.curr_instr_idx;
 		const LowLevelILInstruction instr = curr_function.current_function->GetInstruction(instr_idx);
 
@@ -67,10 +72,10 @@ void EmulatorState::emulate_llil(const Ref<LowLevelILFunction>& llil_func)
 	log->LogInfo("Return value is %d", ret.value);
 }
 
-bool EmulatorState::isFunctionThunk(uint64_t address) const
+bool EmulatorState::isFunctionThunk(const uint64_t address) const
 {
 	// Check if the address belongs to a section in the bv that had read-only permissions
-	auto sections = this->bv->GetSectionsAt(address);
+	const auto sections = this->bv->GetSectionsAt(address);
 	for (const auto& section : sections) {
 		if (section->GetSemantics() == ReadOnlyCodeSectionSemantics)
 			return false;
@@ -78,84 +83,87 @@ bool EmulatorState::isFunctionThunk(uint64_t address) const
 	return true;
 }
 
-void EmulatorState::call_function(uint64_t func_addr, uint64_t retInstrIdx)
+void EmulatorState::call_function(const uint64_t func_addr, const uint64_t retInstrIdx)
 {
-	const auto log = BinaryNinja::LogRegistry::GetLogger(plugin_name);
+	const auto log = this->log;
 	const auto func = this->bv->GetAnalysisFunction(this->bv->GetDefaultPlatform(), func_addr);
-	auto llil_func = func->GetLowLevelIL();
+	const auto llil_func = func->GetLowLevelIL();
 	this->callstack.emplace(stackFrame { .current_function = llil_func, .curr_instr_idx = retInstrIdx });
 }
 
 void EmulatorState::return_from_function()
 {
-	const auto log = BinaryNinja::LogRegistry::GetLogger(plugin_name);
+	const auto log = this->log;
 
 	auto frame = this->callstack.top();
 	this->callstack.pop();
-	return;
 }
 
-ret_val EmulatorState::visit(const struct LowLevelILInstruction* instr)
+ret_val EmulatorState::visit(const LowLevelILInstruction* instr)
 {
-	const auto log = BinaryNinja::LogRegistry::GetLogger(plugin_name);
+	const auto log = this->log;
 	log->LogDebug("\tVisiting LLIL_OP [%d] @ 0x%llx", instr->operation, instr->address);
 
+	ret_val ret;
 	switch (instr->operation) {
-		case LLIL_SET_REG: return visit_LLIL_SET_REG(this, instr);
-		case LLIL_SET_REG_SPLIT: return visit_LLIL_SET_REG_SPLIT(this, instr);
-		case LLIL_SET_FLAG: return visit_LLIL_SET_FLAG(this, instr);
-		case LLIL_LOAD: return visit_LLIL_LOAD(this, instr);
-		case LLIL_STORE: return visit_LLIL_STORE(this, instr);
-		case LLIL_PUSH: return visit_LLIL_PUSH(this, instr);
-		case LLIL_POP: return visit_LLIL_POP(this, instr);
-		case LLIL_REG: return visit_LLIL_REG(this, instr);
-		case LLIL_REG_SPLIT: return visit_LLIL_REG_SPLIT(this, instr);
-		case LLIL_CONST: return visit_LLIL_CONST(this, instr);
-		case LLIL_CONST_PTR: return visit_LLIL_CONST_PTR(this, instr);
-		case LLIL_FLAG: return visit_LLIL_FLAG(this, instr);
-		case LLIL_ADD: return visit_LLIL_ADD(this, instr);
-		case LLIL_SUB: return visit_LLIL_SUB(this, instr);
-		case LLIL_SBB: return visit_LLIL_SBB(this, instr);
-		case LLIL_AND: return visit_LLIL_AND(this, instr);
-		case LLIL_OR: return visit_LLIL_OR(this, instr);
-		case LLIL_XOR: return visit_LLIL_XOR(this, instr);
-		case LLIL_LSL: return visit_LLIL_LSL(this, instr);
-		case LLIL_LSR: return visit_LLIL_LSR(this, instr);
-		case LLIL_ASR: return visit_LLIL_ASR(this, instr);
-		case LLIL_MUL: return visit_LLIL_MUL(this, instr);
-		case LLIL_DIVU_DP: return visit_LLIL_DIVU_DP(this, instr);
-		case LLIL_DIVS_DP: return visit_LLIL_DIVS_DP(this, instr);
-		case LLIL_MODU_DP: return visit_LLIL_MODU_DP(this, instr);
-		case LLIL_MODS_DP: return visit_LLIL_MODS_DP(this, instr);
-		case LLIL_NEG: return visit_LLIL_NEG(this, instr);
-		case LLIL_SX: return visit_LLIL_SX(this, instr);
-		case LLIL_ZX: return visit_LLIL_ZX(this, instr);
-		case LLIL_LOW_PART: return visit_LLIL_LOW_PART(this, instr);
-		case LLIL_JUMP: return visit_LLIL_JUMP(this, instr);
-		case LLIL_JUMP_TO: return visit_LLIL_JUMP_TO(this, instr);
-		case LLIL_CALL: return visit_LLIL_CALL(this, instr);
-		case LLIL_TAILCALL: return visit_LLIL_TAILCALL(this, instr);
-		case LLIL_RET: return visit_LLIL_RET(this, instr);
-		case LLIL_NORET: return visit_LLIL_NORET(this, instr);
-		case LLIL_IF: return visit_LLIL_IF(this, instr);
-		case LLIL_GOTO: return visit_LLIL_GOTO(this, instr);
-		case LLIL_CMP_E: return visit_LLIL_CMP_E(this, instr);
-		case LLIL_CMP_NE: return visit_LLIL_CMP_NE(this, instr);
-		case LLIL_CMP_SLT: return visit_LLIL_CMP_SLT(this, instr);
-		case LLIL_CMP_ULT: return visit_LLIL_CMP_ULT(this, instr);
-		case LLIL_CMP_SLE: return visit_LLIL_CMP_SLE(this, instr);
-		case LLIL_CMP_ULE: return visit_LLIL_CMP_ULE(this, instr);
-		case LLIL_CMP_SGE: return visit_LLIL_CMP_SGE(this, instr);
-		case LLIL_CMP_UGE: return visit_LLIL_CMP_UGE(this, instr);
-		case LLIL_CMP_SGT: return visit_LLIL_CMP_SGT(this, instr);
-		case LLIL_CMP_UGT: return visit_LLIL_CMP_UGT(this, instr);
-		case LLIL_TEST_BIT: return visit_LLIL_TEST_BIT(this, instr);
-		case LLIL_INTRINSIC: return visit_LLIL_INTRINSIC(this, instr);
-		case LLIL_UNDEF: return visit_LLIL_UNDEF(this, instr);
+		case LLIL_SET_REG: ret = visit_LLIL_SET_REG(this, instr); break;
+		case LLIL_SET_REG_SPLIT: ret = visit_LLIL_SET_REG_SPLIT(this, instr); break;
+		case LLIL_SET_FLAG: ret = visit_LLIL_SET_FLAG(this, instr); break;
+		case LLIL_LOAD: ret = visit_LLIL_LOAD(this, instr); break;
+		case LLIL_STORE: ret = visit_LLIL_STORE(this, instr); break;
+		case LLIL_PUSH: ret = visit_LLIL_PUSH(this, instr); break;
+		case LLIL_POP: ret = visit_LLIL_POP(this, instr); break;
+		case LLIL_REG: ret = visit_LLIL_REG(this, instr); break;
+		case LLIL_REG_SPLIT: ret = visit_LLIL_REG_SPLIT(this, instr); break;
+		case LLIL_CONST: ret = visit_LLIL_CONST(this, instr); break;
+		case LLIL_CONST_PTR: ret = visit_LLIL_CONST_PTR(this, instr); break;
+		case LLIL_FLAG: ret = visit_LLIL_FLAG(this, instr); break;
+		case LLIL_ADD: ret = visit_LLIL_ADD(this, instr); break;
+		case LLIL_SUB: ret = visit_LLIL_SUB(this, instr); break;
+		case LLIL_SBB: ret = visit_LLIL_SBB(this, instr); break;
+		case LLIL_AND: ret = visit_LLIL_AND(this, instr); break;
+		case LLIL_OR: ret = visit_LLIL_OR(this, instr); break;
+		case LLIL_XOR: ret = visit_LLIL_XOR(this, instr); break;
+		case LLIL_LSL: ret = visit_LLIL_LSL(this, instr); break;
+		case LLIL_LSR: ret = visit_LLIL_LSR(this, instr); break;
+		case LLIL_ASR: ret = visit_LLIL_ASR(this, instr); break;
+		case LLIL_MUL: ret = visit_LLIL_MUL(this, instr); break;
+		case LLIL_DIVU_DP: ret = visit_LLIL_DIVU_DP(this, instr); break;
+		case LLIL_DIVS_DP: ret = visit_LLIL_DIVS_DP(this, instr); break;
+		case LLIL_MODU_DP: ret = visit_LLIL_MODU_DP(this, instr); break;
+		case LLIL_MODS_DP: ret = visit_LLIL_MODS_DP(this, instr); break;
+		case LLIL_NEG: ret = visit_LLIL_NEG(this, instr); break;
+		case LLIL_SX: ret = visit_LLIL_SX(this, instr); break;
+		case LLIL_ZX: ret = visit_LLIL_ZX(this, instr); break;
+		case LLIL_LOW_PART: ret = visit_LLIL_LOW_PART(this, instr); break;
+		case LLIL_JUMP: ret = visit_LLIL_JUMP(this, instr); break;
+		case LLIL_JUMP_TO: ret = visit_LLIL_JUMP_TO(this, instr); break;
+		case LLIL_CALL: ret = visit_LLIL_CALL(this, instr); break;
+		case LLIL_TAILCALL: ret = visit_LLIL_TAILCALL(this, instr); break;
+		case LLIL_RET: ret = visit_LLIL_RET(this, instr); break;
+		case LLIL_NORET: ret = visit_LLIL_NORET(this, instr); break;
+		case LLIL_IF: ret = visit_LLIL_IF(this, instr); break;
+		case LLIL_GOTO: ret = visit_LLIL_GOTO(this, instr); break;
+		case LLIL_CMP_E: ret = visit_LLIL_CMP_E(this, instr); break;
+		case LLIL_CMP_NE: ret = visit_LLIL_CMP_NE(this, instr); break;
+		case LLIL_CMP_SLT: ret = visit_LLIL_CMP_SLT(this, instr); break;
+		case LLIL_CMP_ULT: ret = visit_LLIL_CMP_ULT(this, instr); break;
+		case LLIL_CMP_SLE: ret = visit_LLIL_CMP_SLE(this, instr); break;
+		case LLIL_CMP_ULE: ret = visit_LLIL_CMP_ULE(this, instr); break;
+		case LLIL_CMP_SGE: ret = visit_LLIL_CMP_SGE(this, instr); break;
+		case LLIL_CMP_UGE: ret = visit_LLIL_CMP_UGE(this, instr); break;
+		case LLIL_CMP_SGT: ret = visit_LLIL_CMP_SGT(this, instr); break;
+		case LLIL_CMP_UGT: ret = visit_LLIL_CMP_UGT(this, instr); break;
+		case LLIL_TEST_BIT: ret = visit_LLIL_TEST_BIT(this, instr); break;
+		case LLIL_INTRINSIC: ret = visit_LLIL_INTRINSIC(this, instr); break;
+		case LLIL_UNDEF: ret = visit_LLIL_UNDEF(this, instr); break;
 		default: {
-			const auto log = BinaryNinja::LogRegistry::GetLogger(plugin_name);
-			log->LogError("[*] Unhandled LLIL_OP [%d] @ 0x%llx\n", instr->operation, instr->address);
-			return { .discriminator = UNIMPL };
-		} break;
+			ret = { .discriminator = UNIMPL };
+		}
 	}
+	if (ret.discriminator == UNIMPL) {
+		log->LogError("[*] Unhandled LLIL_OP [%d] @ 0x%llx\n", instr->operation, instr->address);
+		exit(-1);
+	}
+	return ret;
 }

@@ -1,4 +1,5 @@
-#include "emulator.h"
+#pragma once
+#include "emulator.hpp"
 
 ret_val visit_LLIL_SET_REG(EmulatorState* emu, const LowLevelILInstruction* instr);
 ret_val visit_LLIL_SET_REG_SPLIT(EmulatorState* emu, const LowLevelILInstruction* instr);

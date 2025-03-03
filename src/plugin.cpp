@@ -1,9 +1,9 @@
-#include "emulator.h"
+#include "emulator.hpp"
 #include <cstdio>
 
 using namespace BinaryNinja;
 
-int main(int argc, char* argv[])
+int main(const int argc, char* argv[])
 {
 	if (argc != 3) {
 		fprintf(stderr, "Usage: ./bnil-emulator <binary path> <starting function>\n");
@@ -16,10 +16,10 @@ int main(int argc, char* argv[])
 	InitPlugins(true);
 	LogToStdout(DebugLog);
 
-	const Ref<BinaryView> bv = BinaryNinja::Load(argv[1], true);
+	const Ref<BinaryView> bv = Load(argv[1], true);
 	bv->UpdateAnalysisAndWait();
 
-	const auto log = BinaryNinja::LogRegistry::CreateLogger(plugin_name);
+	const auto log = LogRegistry::CreateLogger(plugin_name);
 
 	if (!bv || bv->GetTypeName() == "Raw") {
 		log->LogError("Input file does not appear to be an executable\n");
@@ -27,17 +27,17 @@ int main(int argc, char* argv[])
 	}
 
 	// Get `main` function
-	Ref<Symbol> sym = bv->GetSymbolByRawName(argv[2]);
+	const Ref<Symbol> sym = bv->GetSymbolByRawName(argv[2]);
 	if (!sym) {
-		sym = bv->GetSymbolByRawName("_main"); // macOS binaries use _main
+		log->LogError("Unable to find \"%s\" in the binary", argv[2]);
 	}
 
 	const Ref<Function> func = bv->GetAnalysisFunction(bv->GetDefaultPlatform(), sym->GetAddress());
 	const Ref<LowLevelILFunction> llil_func = func->GetLowLevelIL();
 
-	EmulatorState* emu_state = new EmulatorState(bv);
+	const auto emu_state = new EmulatorState(bv);
 	if (!llil_func) {
-		log->LogError("[!] MLIL is not available for %s @ 0x%llx\n", sym->GetFullName().c_str(), sym->GetAddress());
+		log->LogError("[!] LLIL is not available for %s @ 0x%llx\n", sym->GetFullName().c_str(), sym->GetAddress());
 		delete emu_state;
 		return -1;
 	}
