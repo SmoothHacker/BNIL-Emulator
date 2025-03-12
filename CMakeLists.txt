@@ -3,10 +3,13 @@ cmake_minimum_required(VERSION 3.14 FATAL_ERROR)
 project(bnil_emulator)
 
 # Create plugin executable target
-file(GLOB BN_API_SOURCES CONFIGURE_DEPENDS src/*.cpp src/*.hpp)
-add_executable(bnil_emulator ${BN_API_SOURCES})
+include_directories(src)
+add_library(libemulator src/emulator.cpp src/llil_visitor.cpp src/emulator.hpp src/llil_visitor.hpp)
+add_executable(bnil_emulator src/plugin.cpp)
 
-target_compile_features(bnil_emulator PRIVATE cxx_std_17)
+target_compile_features(bnil_emulator PRIVATE cxx_std_23)
+target_compile_features(libemulator PRIVATE cxx_std_23)
+target_link_libraries(bnil_emulator libemulator)
 
 # Add vendored API dependency if enabled
 option(BN_VENDOR_API "Use the Binary Ninja API submodule" ON)
@@ -21,6 +24,8 @@ if(BN_VENDOR_API)
 	)
 	message(STATUS "Found Binary Ninja API Path: ${BN_API_PATH}")
 	add_subdirectory(${BN_API_PATH} api)
+	target_link_libraries(libemulator binaryninjaapi)
 	target_link_libraries(bnil_emulator binaryninjaapi)
 endif()
 
+add_subdirectory(tests)
