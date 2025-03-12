@@ -1,7 +1,6 @@
 #pragma once
 #include "lowlevelilinstruction.h"
 
-#include <memory>
 #include <stack>
 #include <vector>
 using namespace BinaryNinja;
@@ -37,14 +36,14 @@ typedef struct emuVariable {
 
 typedef struct stackFrame {
 	uint8_t* stack;
-	Ref<LowLevelILFunction> current_function;
-	uint64_t curr_instr_idx;
+	Ref<LowLevelILFunction> llilFunction;
+	uint64_t curInstrIdx;
 } stackFrame;
 
 ret_val operator+(const ret_val& lhs, const ret_val& rhs);
 ret_val operator-(const ret_val& lhs, const ret_val& rhs);
 
-class EmulatorState {
+class Emulator {
 	std::vector<mem_segment> memory; // segments->memory_page
 	Ref<BinaryView> bv;
 	std::stack<stackFrame> callstack;
@@ -57,8 +56,8 @@ public:
 	void dumpRegisters();
 
 	Ref<Logger> log;
-	explicit EmulatorState(BinaryView* bv);
-	~EmulatorState();
+	explicit Emulator(BinaryView* bv);
+	~Emulator();
 
 	ret_val visit(const LowLevelILInstruction* instr);
 	void call_function(uint64_t func_addr, uint64_t retInstrIdx);

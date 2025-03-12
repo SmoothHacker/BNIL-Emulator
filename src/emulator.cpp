@@ -1,26 +1,26 @@
 #include "emulator.hpp"
 #include "llil_visitor.hpp"
 
-void EmulatorState::setRegister(const uint32_t reg, const ret_val value)
+void Emulator::setRegister(const uint32_t reg, const ret_val value)
 {
 	this->regs[reg] = value.value;
 }
 
-Ref<BinaryView> EmulatorState::getBinaryView()
+Ref<BinaryView> Emulator::getBinaryView()
 {
 	return this->bv;
 }
 
-void EmulatorState::dumpRegisters()
+void Emulator::dumpRegisters()
 {
 	const auto arch = this->bv->GetDefaultArchitecture();
 	this->log->LogInfo("Dumping registers:");
 	for (const auto& [reg, value] : this->regs) {
-		this->log->LogInfo("\t%s : 0x%lx", arch->GetRegisterName(reg).c_str(), this->regs[reg]);
+		this->log->LogInfo("\t%s : 0x%lx", arch->GetRegisterName(reg).c_str(), value);
 	}
 }
 
-EmulatorState::EmulatorState(BinaryView* bv)
+Emulator::Emulator(BinaryView* bv)
 {
 	this->log = LogRegistry::GetLogger(plugin_name);
 
@@ -31,7 +31,7 @@ EmulatorState::EmulatorState(BinaryView* bv)
 	this->bv = bv;
 }
 
-void EmulatorState::printCallstack()
+void Emulator::printCallstack()
 {
 	const auto log = this->log;
 	log->LogDebug("Emulator Callstack Dump\n");
@@ -40,17 +40,17 @@ void EmulatorState::printCallstack()
 		const auto currFrame = this->callstack.top();
 
 		// Get function name
-		const std::string funcName = currFrame.current_function->GetFunction()->GetSymbol()->GetFullName();
+		const std::string funcName = currFrame.llilFunction->GetFunction()->GetSymbol()->GetFullName();
 
 		// Get address
-		const uint64_t address = currFrame.current_function->GetExpr(currFrame.curr_instr_idx).address;
+		const uint64_t address = currFrame.llilFunction->GetExpr(currFrame.curInstrIdx).address;
 
 		log->LogInfo("\t[%d] Name: %s | 0x%llx", i, funcName.c_str(), address);
 		this->callstack.pop();
 	}
 }
 
-EmulatorState::~EmulatorState()
+Emulator::~Emulator()
 {
 	for (const auto& segment : this->memory) {
 		delete[] segment.mem;
@@ -59,7 +59,7 @@ EmulatorState::~EmulatorState()
 	BNShutdown();
 }
 
-void EmulatorState::emulate_llil(const Ref<LowLevelILFunction>& llil_func)
+void Emulator::emulate_llil(const Ref<LowLevelILFunction>& llil_func)
 {
 	const auto log = this->log;
 	this->call_function(llil_func->GetFunction()->GetStart(), 0);
@@ -68,25 +68,24 @@ void EmulatorState::emulate_llil(const Ref<LowLevelILFunction>& llil_func)
 	// Fetch instructions and begin execution
 	do {
 		// Fetch IL instruction
-		const auto curr_function = this->callstack.top();
-		const uint64_t instr_idx = curr_function.curr_instr_idx;
-		const LowLevelILInstruction instr = curr_function.current_function->GetInstruction(instr_idx);
+		const auto sf = this->callstack.top();
+		LowLevelILInstruction instr = (*sf.llilFunction)[sf.curInstrIdx];
 
-		auto sym = this->bv->GetSymbolByAddress(curr_function.current_function->GetCurrentAddress());
-		log->LogDebug("Emulating Instr @ 0x%llx", instr.address);
+		auto sym = this->bv->GetSymbolByAddress(sf.llilFunction->GetCurrentAddress());
+		log->LogDebug("Emulating Instr @ idx [%d] addr: 0x%llx", sf.curInstrIdx, instr.address);
 		//  Start visitor
 		ret = this->visit(&instr);
 
 		if (this->callstack.empty())
 			break;
 
-		this->callstack.top().curr_instr_idx += 1;
+		this->callstack.top().curInstrIdx += 1;
 
-	} while (this->callstack.top().curr_instr_idx < this->callstack.top().current_function->GetInstructionCount());
+	} while (this->callstack.top().curInstrIdx < this->callstack.top().llilFunction->GetInstructionCount());
 	log->LogInfo("Return value is %d", ret.value);
 }
 
-bool EmulatorState::isFunctionThunk(const uint64_t address) const
+bool Emulator::isFunctionThunk(const uint64_t address) const
 {
 	// Check if the address belongs to a section in the bv that had read-only permissions
 	const auto sections = this->bv->GetSectionsAt(address);
@@ -97,15 +96,15 @@ bool EmulatorState::isFunctionThunk(const uint64_t address) const
 	return true;
 }
 
-void EmulatorState::call_function(const uint64_t func_addr, const uint64_t retInstrIdx)
+void Emulator::call_function(const uint64_t func_addr, const uint64_t retInstrIdx)
 {
 	const auto log = this->log;
 	const auto func = this->bv->GetAnalysisFunction(this->bv->GetDefaultPlatform(), func_addr);
 	const auto llil_func = func->GetLowLevelIL();
-	this->callstack.emplace(stackFrame { .current_function = llil_func, .curr_instr_idx = retInstrIdx });
+	this->callstack.emplace(stackFrame { .llilFunction = llil_func, .curInstrIdx = retInstrIdx });
 }
 
-void EmulatorState::return_from_function()
+void Emulator::return_from_function()
 {
 	const auto log = this->log;
 
@@ -113,7 +112,7 @@ void EmulatorState::return_from_function()
 	this->callstack.pop();
 }
 
-ret_val EmulatorState::visit(const LowLevelILInstruction* instr)
+ret_val Emulator::visit(const LowLevelILInstruction* instr)
 {
 	const auto log = this->log;
 	log->LogDebug("\tVisiting LLIL_OP [%d] @ 0x%llx", instr->operation, instr->address);
@@ -174,10 +173,6 @@ ret_val EmulatorState::visit(const LowLevelILInstruction* instr)
 		default: {
 			ret = { .discriminator = UNIMPL };
 		}
-	}
-	if (ret.discriminator == UNIMPL) {
-		log->LogError("[*] Unhandled LLIL_OP [%d] @ 0x%llx\n", instr->operation, instr->address);
-		exit(-1);
 	}
 	return ret;
 }

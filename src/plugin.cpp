@@ -35,7 +35,7 @@ int main(const int argc, char* argv[])
 	const Ref<Function> func = bv->GetAnalysisFunction(bv->GetDefaultPlatform(), sym->GetAddress());
 	const Ref<LowLevelILFunction> llil_func = func->GetLowLevelIL();
 
-	const auto emu_state = new EmulatorState(bv);
+	const auto emu_state = new Emulator(bv);
 	if (!llil_func) {
 		log->LogError("[!] LLIL is not available for %s @ 0x%llx\n", sym->GetFullName().c_str(), sym->GetAddress());
 		delete emu_state;
@@ -43,5 +43,6 @@ int main(const int argc, char* argv[])
 	}
 
 	emu_state->emulate_llil(llil_func);
+	emu_state->dumpRegisters();
 	return 0;
 }
