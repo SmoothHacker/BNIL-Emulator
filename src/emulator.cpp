@@ -1,9 +1,14 @@
 #include "emulator.hpp"
 #include "llil_visitor.hpp"
 
-void Emulator::setRegister(const uint32_t reg, const ret_val value)
+void Emulator::setRegister(const uint32_t reg, const double value)
 {
-	this->regs[reg] = value.value;
+	this->regs[reg] = value;
+}
+
+double Emulator::getRegister(uint32_t reg)
+{
+	return this->regs[reg];
 }
 
 Ref<BinaryView> Emulator::getBinaryView()
@@ -24,9 +29,10 @@ Emulator::Emulator(BinaryView* bv)
 {
 	this->log = LogRegistry::GetLogger(plugin_name);
 
+	this->log->LogDebug("Emulator Memory Map: ");
 	for (const Ref<Segment>& segment : bv->GetSegments()) {
 		this->memory.push_back({ new uint8_t[segment->GetLength()], segment->GetStart(), segment->GetEnd() });
-		this->log->LogDebug("Start: 0x%llx - End: 0x%llx", segment->GetStart(), segment->GetEnd(), segment->GetFlags());
+		this->log->LogDebug("0x%08llx <-> 0x%08llx", segment->GetStart(), segment->GetEnd(), segment->GetFlags());
 	}
 	this->bv = bv;
 }
@@ -37,7 +43,7 @@ void Emulator::printCallstack()
 	log->LogDebug("Emulator Callstack Dump\n");
 
 	for (int i = 0; !this->callstack.empty(); i++) {
-		const auto currFrame = this->callstack.top();
+		const auto &currFrame = this->callstack.top();
 
 		// Get function name
 		const std::string funcName = currFrame.llilFunction->GetFunction()->GetSymbol()->GetFullName();
@@ -61,10 +67,10 @@ Emulator::~Emulator()
 
 void Emulator::emulate_llil(const Ref<LowLevelILFunction>& llil_func)
 {
-	const auto log = this->log;
+	const auto &log = this->log;
 	this->call_function(llil_func->GetFunction()->GetStart(), 0);
 
-	ret_val ret;
+	double ret;
 	// Fetch instructions and begin execution
 	do {
 		// Fetch IL instruction
@@ -82,14 +88,13 @@ void Emulator::emulate_llil(const Ref<LowLevelILFunction>& llil_func)
 		this->callstack.top().curInstrIdx += 1;
 
 	} while (this->callstack.top().curInstrIdx < this->callstack.top().llilFunction->GetInstructionCount());
-	log->LogInfo("Return value is %d", ret.value);
+	log->LogInfo("Return value is %d", ret);
 }
 
 bool Emulator::isFunctionThunk(const uint64_t address) const
 {
 	// Check if the address belongs to a section in the bv that had read-only permissions
-	const auto sections = this->bv->GetSectionsAt(address);
-	for (const auto& section : sections) {
+	for (const auto sections = this->bv->GetSectionsAt(address); const auto& section : sections) {
 		if (section->GetSemantics() == ReadOnlyDataSectionSemantics)
 			return false;
 	}
@@ -98,7 +103,6 @@ bool Emulator::isFunctionThunk(const uint64_t address) const
 
 void Emulator::call_function(const uint64_t func_addr, const uint64_t retInstrIdx)
 {
-	const auto log = this->log;
 	const auto func = this->bv->GetAnalysisFunction(this->bv->GetDefaultPlatform(), func_addr);
 	const auto llil_func = func->GetLowLevelIL();
 	this->callstack.emplace(stackFrame { .llilFunction = llil_func, .curInstrIdx = retInstrIdx });
@@ -106,18 +110,15 @@ void Emulator::call_function(const uint64_t func_addr, const uint64_t retInstrId
 
 void Emulator::return_from_function()
 {
-	const auto log = this->log;
-
-	auto frame = this->callstack.top();
 	this->callstack.pop();
 }
 
-ret_val Emulator::visit(const LowLevelILInstruction* instr)
+double Emulator::visit(const LowLevelILInstruction* instr)
 {
-	const auto log = this->log;
-	log->LogDebug("\tVisiting LLIL_OP [%d] @ 0x%llx", instr->operation, instr->address);
+	const auto &log = this->log;
+	log->LogDebug("\tVisiting LLIL_OP [%s] @ 0x%llx", LLIL_NAME[instr->operation], instr->address);
 
-	ret_val ret;
+	double ret;
 	switch (instr->operation) {
 		case LLIL_SET_REG: ret = visit_LLIL_SET_REG(this, instr); break;
 		case LLIL_SET_REG_SPLIT: ret = visit_LLIL_SET_REG_SPLIT(this, instr); break;
@@ -171,7 +172,7 @@ ret_val Emulator::visit(const LowLevelILInstruction* instr)
 		case LLIL_INTRINSIC: ret = visit_LLIL_INTRINSIC(this, instr); break;
 		case LLIL_UNDEF: ret = visit_LLIL_UNDEF(this, instr); break;
 		default: {
-			ret = { .discriminator = UNIMPL };
+			ret = -1;
 		}
 	}
 	return ret;

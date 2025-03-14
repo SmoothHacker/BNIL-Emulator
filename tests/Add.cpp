@@ -5,40 +5,49 @@
 #include <string>
 #include <emulator.hpp>
 
-TEST_CASE("BasicProgram1") {
+Emulator *CreateInstance(const std::string &input, Ref<LowLevelILFunction> &llil_func)
+{
 	SetBundledPluginDirectory(GetBundledPluginDirectory());
 	InitPlugins(true);
-	LogToStdout(DebugLog);
 	const auto log = LogRegistry::CreateLogger(plugin_name);
-
 	const Ref<Architecture> arch = Architecture::GetByName("x86_64");
 	const Ref<Platform> plat = Platform::GetByName("linux-x86_64");
 	DataBuffer db {};
 	std::string errors;
-	arch->Assemble("mov rcx, 0xdead;\nmov rdx, 0xbeef;\nadd rdx, rcx;\n retn 0;", 0x0, db, errors);
+	arch->Assemble(input, 0x0, db, errors);
 
 	const Ref<BinaryView> bv = Load(db, true);
 	bv->SetDefaultPlatform(plat);
 	const Ref<Function> func = bv->AddFunctionForAnalysis(plat, 0x0, false);
 	bv->UpdateAnalysisAndWait();
 	const Ref<LowLevelILFunction> il = func->GetLowLevelIL();
+	LogToStdout(DebugLog);
 
 	for (const auto& block : il->GetBasicBlocks()) {
 		for (size_t instrIndex = block->GetStart(); instrIndex < block->GetEnd(); instrIndex++) {
-			const LowLevelILInstruction instr = (*il)[instrIndex];
+			const LowLevelILInstruction instr = il->GetExpr(instrIndex);
 			std::vector<InstructionTextToken> tokens;
-			printf("Arch name %s\n", func->GetArchitecture()->GetName().c_str());
 			il->GetInstructionText(func, func->GetArchitecture(), instrIndex, tokens);
-			printf("    %" PRIdPTR " @ 0x%" PRIx64 "  ", instrIndex, instr.address);
-			for (auto& token : tokens)
-				printf("%s", token.text.c_str());
-			printf("\n");
+			char lineBuf[50] = {};
+			snprintf(lineBuf, sizeof(lineBuf),"    %" PRIdPTR " @ 0x%" PRIx64 "  ", instrIndex, instr.address);
+			std::string disassLine(lineBuf, strlen(lineBuf));
+			for (const auto& token : tokens)
+				disassLine += token.text;
+
+			log->LogDebug("%s", disassLine.c_str());
 		}
 	}
+	llil_func = il;
+	return new Emulator(bv);
+}
 
-	const auto emu = new Emulator(bv);
-	emu->emulate_llil(il);
+TEST_CASE("BasicProgram1") {
+	const std::string input = "mov rcx, 0xdead;\nmov rdx, 0xbeef;\nadd rdx, rcx;\n retn 0;";
+	Ref<LowLevelILFunction> llil_func;
+	const auto emu = CreateInstance(input, llil_func);
+	emu->emulate_llil(llil_func);
 
-	printf("Address Size: %lu\n", bv->GetAddressSize());
-	CHECK(1 == 1);
+	const auto rdx = llil_func->GetFunction()->GetArchitecture()->GetRegisterByName("rdx");
+	const auto rdx_val = emu->getRegister(rdx);
+	CHECK(rdx_val == 0x19d9c);
 }

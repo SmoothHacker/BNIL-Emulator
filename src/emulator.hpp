@@ -1,27 +1,17 @@
 #pragma once
+
 #include "lowlevelilinstruction.h"
 
 #include <stack>
 #include <vector>
+
 using namespace BinaryNinja;
-
-#pragma once
-
 constexpr auto plugin_name = "plugin.bnil_emulator";
 
-enum ret_val_type : uint8_t {
+enum double_type : uint8_t {
 	UNIMPL,
-	UINT64_T,
-	UINT32_T,
+	INT
 };
-
-// This is needed to return discovered values to the calling visit function
-typedef struct ret_val {
-	ret_val_type discriminator;
-	union {
-		uint64_t value = 0;
-	};
-} ret_val;
 
 typedef struct memSegment {
 	uint8_t* mem;
@@ -40,18 +30,16 @@ typedef struct stackFrame {
 	uint64_t curInstrIdx;
 } stackFrame;
 
-ret_val operator+(const ret_val& lhs, const ret_val& rhs);
-ret_val operator-(const ret_val& lhs, const ret_val& rhs);
-
 class Emulator {
 	std::vector<mem_segment> memory; // segments->memory_page
 	Ref<BinaryView> bv;
 	std::stack<stackFrame> callstack;
-	std::map<uint32_t, uint64_t> regs;
+	std::map<uint32_t, double> regs;
 
 public:
 	[[nodiscard]] stackFrame getTopCallstack() const { return callstack.top(); }
-	void setRegister(uint32_t reg, ret_val value);
+	void setRegister(uint32_t reg, double value);
+	double getRegister(uint32_t reg);
 	Ref<BinaryView> getBinaryView();
 	void dumpRegisters();
 
@@ -59,7 +47,7 @@ public:
 	explicit Emulator(BinaryView* bv);
 	~Emulator();
 
-	ret_val visit(const LowLevelILInstruction* instr);
+	double visit(const LowLevelILInstruction* instr);
 	void call_function(uint64_t func_addr, uint64_t retInstrIdx);
 	void return_from_function();
 
