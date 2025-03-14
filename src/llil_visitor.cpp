@@ -68,7 +68,7 @@ double visit_LLIL_REG_SPLIT(Emulator* emu, const LowLevelILInstruction* instr)
 double visit_LLIL_CONST(Emulator* emu, const LowLevelILInstruction* instr)
 {
 	const auto constVal = instr->GetConstant();
-	return constVal;
+	return static_cast<double>(constVal);
 }
 
 double visit_LLIL_CONST_PTR(Emulator* emu, const LowLevelILInstruction* instr)

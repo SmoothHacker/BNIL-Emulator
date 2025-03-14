@@ -1,11 +1,11 @@
 #include <catch2/catch_test_macros.hpp>
 
-#include <vector>
 #include <cinttypes>
-#include <string>
 #include <emulator.hpp>
+#include <string>
+#include <vector>
 
-Emulator *CreateInstance(const std::string &input, Ref<LowLevelILFunction> &llil_func)
+static Emulator* CreateInstance(const std::string& input, Ref<LowLevelILFunction>& llil_func)
 {
 	SetBundledPluginDirectory(GetBundledPluginDirectory());
 	InitPlugins(true);
@@ -25,11 +25,11 @@ Emulator *CreateInstance(const std::string &input, Ref<LowLevelILFunction> &llil
 
 	for (const auto& block : il->GetBasicBlocks()) {
 		for (size_t instrIndex = block->GetStart(); instrIndex < block->GetEnd(); instrIndex++) {
-			const LowLevelILInstruction instr = il->GetExpr(instrIndex);
+			const LowLevelILInstruction instr = (*il)[instrIndex];
 			std::vector<InstructionTextToken> tokens;
 			il->GetInstructionText(func, func->GetArchitecture(), instrIndex, tokens);
 			char lineBuf[50] = {};
-			snprintf(lineBuf, sizeof(lineBuf),"    %" PRIdPTR " @ 0x%" PRIx64 "  ", instrIndex, instr.address);
+			snprintf(lineBuf, sizeof(lineBuf), "    %" PRIdPTR " @ 0x%" PRIx64 "  ", instrIndex, instr.address);
 			std::string disassLine(lineBuf, strlen(lineBuf));
 			for (const auto& token : tokens)
 				disassLine += token.text;
@@ -41,7 +41,8 @@ Emulator *CreateInstance(const std::string &input, Ref<LowLevelILFunction> &llil
 	return new Emulator(bv);
 }
 
-TEST_CASE("BasicProgram1") {
+TEST_CASE("BasicProgram1")
+{
 	const std::string input = "mov rcx, 0xdead;\nmov rdx, 0xbeef;\nadd rdx, rcx;\n retn 0;";
 	Ref<LowLevelILFunction> llil_func;
 	const auto emu = CreateInstance(input, llil_func);

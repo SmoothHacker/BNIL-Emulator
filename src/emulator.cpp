@@ -6,7 +6,7 @@ void Emulator::setRegister(const uint32_t reg, const double value)
 	this->regs[reg] = value;
 }
 
-double Emulator::getRegister(uint32_t reg)
+double Emulator::getRegister(const uint32_t reg)
 {
 	return this->regs[reg];
 }
@@ -43,7 +43,7 @@ void Emulator::printCallstack()
 	log->LogDebug("Emulator Callstack Dump\n");
 
 	for (int i = 0; !this->callstack.empty(); i++) {
-		const auto &currFrame = this->callstack.top();
+		const auto& currFrame = this->callstack.top();
 
 		// Get function name
 		const std::string funcName = currFrame.llilFunction->GetFunction()->GetSymbol()->GetFullName();
@@ -51,7 +51,7 @@ void Emulator::printCallstack()
 		// Get address
 		const uint64_t address = currFrame.llilFunction->GetExpr(currFrame.curInstrIdx).address;
 
-		log->LogInfo("\t[%d] Name: %s | 0x%llx", i, funcName.c_str(), address);
+		log->LogInfo("\t[%d] Name: %s | 0x%08llx", i, funcName.c_str(), address);
 		this->callstack.pop();
 	}
 }
@@ -67,20 +67,19 @@ Emulator::~Emulator()
 
 void Emulator::emulate_llil(const Ref<LowLevelILFunction>& llil_func)
 {
-	const auto &log = this->log;
+	const auto& log = this->log;
 	this->call_function(llil_func->GetFunction()->GetStart(), 0);
 
-	double ret;
 	// Fetch instructions and begin execution
 	do {
 		// Fetch IL instruction
-		const auto sf = this->callstack.top();
-		LowLevelILInstruction instr = (*sf.llilFunction)[sf.curInstrIdx];
+		const auto& sf = this->callstack.top();
+		LowLevelILInstruction const instr = (*sf.llilFunction)[sf.curInstrIdx];
 
 		auto sym = this->bv->GetSymbolByAddress(sf.llilFunction->GetCurrentAddress());
-		log->LogDebug("Emulating Instr @ idx [%d] addr: 0x%llx", sf.curInstrIdx, instr.address);
+		log->LogDebug("Emulating Instr @ idx [%d] addr: 0x%08llx", sf.curInstrIdx, instr.address);
 		//  Start visitor
-		ret = this->visit(&instr);
+		this->visit(&instr);
 
 		if (this->callstack.empty())
 			break;
@@ -88,7 +87,6 @@ void Emulator::emulate_llil(const Ref<LowLevelILFunction>& llil_func)
 		this->callstack.top().curInstrIdx += 1;
 
 	} while (this->callstack.top().curInstrIdx < this->callstack.top().llilFunction->GetInstructionCount());
-	log->LogInfo("Return value is %d", ret);
 }
 
 bool Emulator::isFunctionThunk(const uint64_t address) const
@@ -115,8 +113,8 @@ void Emulator::return_from_function()
 
 double Emulator::visit(const LowLevelILInstruction* instr)
 {
-	const auto &log = this->log;
-	log->LogDebug("\tVisiting LLIL_OP [%s] @ 0x%llx", LLIL_NAME[instr->operation], instr->address);
+	const auto& log = this->log;
+	log->LogDebug("\tVisiting LLIL_OP [%s]", LLIL_NAME[instr->operation]);
 
 	double ret;
 	switch (instr->operation) {
