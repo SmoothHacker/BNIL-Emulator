@@ -37,22 +37,21 @@ class Emulator {
 	std::map<uint32_t, double> regs;
 
 public:
+	Ref<Logger> log;
+	explicit Emulator(BinaryView* bv);
+	~Emulator();
+
 	[[nodiscard]] stackFrame getTopCallstack() const { return callstack.top(); }
 	void setRegister(uint32_t reg, double value);
 	double getRegister(uint32_t reg);
 	Ref<BinaryView> getBinaryView();
 	void dumpRegisters();
-
-	Ref<Logger> log;
-	explicit Emulator(BinaryView* bv);
-	~Emulator();
-
 	double visit(const LowLevelILInstruction* instr);
 	void call_function(uint64_t func_addr, uint64_t retInstrIdx);
 	void return_from_function();
-
 	void printCallstack();
-
 	bool isFunctionThunk(uint64_t address) const;
+	uint64_t readMemory(uint64_t address, uint8_t size) const;
+	void writeMemory(uint64_t address, uint64_t value, uint8_t size) const;
 	void emulate_llil(const Ref<LowLevelILFunction>& llil_func);
 };

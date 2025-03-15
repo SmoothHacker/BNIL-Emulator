@@ -32,7 +32,7 @@ Emulator::Emulator(BinaryView* bv)
 	this->log->LogDebug("Emulator Memory Map: ");
 	for (const Ref<Segment>& segment : bv->GetSegments()) {
 		this->memory.push_back({ new uint8_t[segment->GetLength()], segment->GetStart(), segment->GetEnd() });
-		this->log->LogDebug("0x%08llx <-> 0x%08llx", segment->GetStart(), segment->GetEnd(), segment->GetFlags());
+		this->log->LogDebug("0x%08llx <-> 0x%08llx", segment->GetStart(), segment->GetEnd());
 	}
 	this->bv = bv;
 }
@@ -99,6 +99,58 @@ bool Emulator::isFunctionThunk(const uint64_t address) const
 	return true;
 }
 
+uint64_t Emulator::readMemory(const uint64_t address, const uint8_t size) const
+{
+	const mem_segment* seg = nullptr;
+	for (const auto& segment : this->memory) {
+		if (segment.startAddr <= address && segment.endAddr > address) {
+			seg = &segment;
+			break;
+		}
+	}
+	if (seg == nullptr) {
+		this->log->LogError("Address 0x%08llx not found\n", address);
+		exit(-1); // figure out a better way to throw an error
+	}
+
+	this->log->LogDebug("Reading value from 0x%08llx", address);
+	if (size == 1)
+		return *(seg->mem + (address - seg->startAddr));
+	if (size == 2)
+		return *reinterpret_cast<uint16_t*>(seg->mem + (address - seg->startAddr));
+	if (size == 4)
+		return *reinterpret_cast<uint32_t*>(seg->mem + (address - seg->startAddr));
+
+	// size is assumed to be uint64_t
+	return *reinterpret_cast<uint64_t*>(seg->mem + (address - seg->startAddr));
+}
+
+void Emulator::writeMemory(const uint64_t address, const uint64_t value, const uint8_t size) const
+{
+	const mem_segment* seg = nullptr;
+	for (const auto& segment : this->memory) {
+		if (segment.startAddr <= address && segment.endAddr > address) {
+			seg = &segment;
+			break;
+		}
+	}
+	if (seg == nullptr) {
+		this->log->LogError("Address 0x%08llx not found\n", address);
+		exit(-1); // figure out a better way to throw an error
+	}
+
+	this->log->LogDebug("Writing 0x%08llx to 0x%08llx", value, address);
+	if (size == 1) {
+		*(seg->mem + (address - seg->startAddr)) = value;
+	} else if (size == 2) {
+		*reinterpret_cast<uint16_t*>(seg->mem + (address - seg->startAddr)) = value;
+	} else if (size == 4) {
+		*reinterpret_cast<uint32_t*>(seg->mem + (address - seg->startAddr)) = value;
+	} else { // size is assumed to be uint64_t
+		*reinterpret_cast<uint64_t*>(seg->mem + (address - seg->startAddr)) = value;
+	}
+}
+
 void Emulator::call_function(const uint64_t func_addr, const uint64_t retInstrIdx)
 {
 	const auto func = this->bv->GetAnalysisFunction(this->bv->GetDefaultPlatform(), func_addr);
@@ -114,9 +166,9 @@ void Emulator::return_from_function()
 double Emulator::visit(const LowLevelILInstruction* instr)
 {
 	const auto& log = this->log;
-	log->LogDebug("\tVisiting LLIL_OP [%s]", LLIL_NAME[instr->operation]);
+	log->LogDebug("\tVisiting [%s]", LLIL_NAME[instr->operation]);
 
-	double ret;
+	double ret = 0.0;
 	switch (instr->operation) {
 		case LLIL_SET_REG: ret = visit_LLIL_SET_REG(this, instr); break;
 		case LLIL_SET_REG_SPLIT: ret = visit_LLIL_SET_REG_SPLIT(this, instr); break;

@@ -23,13 +23,19 @@ double visit_LLIL_SET_FLAG(Emulator* emu, const LowLevelILInstruction* instr)
 
 double visit_LLIL_LOAD(Emulator* emu, const LowLevelILInstruction* instr)
 {
-	emu->log->LogError("LLIL_LOAD @ 0x%08lx is unimplemented", instr->address);
+	const auto src = instr->GetSourceExpr<LLIL_LOAD>();
+	const auto address = emu->visit(&src);
+	emu->readMemory(static_cast<uint64_t>(address), instr->size);
 	return -1;
 }
 
 double visit_LLIL_STORE(Emulator* emu, const LowLevelILInstruction* instr)
 {
-	emu->log->LogError("LLIL_STORE @ 0x%08lx is unimplemented", instr->address);
+	const auto src = instr->GetSourceExpr<LLIL_STORE>();
+	const auto dest = instr->GetDestExpr<LLIL_STORE>();
+	const auto value = emu->visit(&src);
+	const auto address = emu->visit(&dest);
+	emu->writeMemory(static_cast<uint64_t>(address), static_cast<uint64_t>(value), instr->size);
 	return -1;
 }
 
@@ -73,8 +79,8 @@ double visit_LLIL_CONST(Emulator* emu, const LowLevelILInstruction* instr)
 
 double visit_LLIL_CONST_PTR(Emulator* emu, const LowLevelILInstruction* instr)
 {
-	emu->log->LogError("LLIL_CONST_PTR @ 0x%08lx is unimplemented", instr->address);
-	return -1;
+	const auto constant = instr->GetConstant<LLIL_CONST_PTR>();
+	return static_cast<double>(constant);
 }
 
 double visit_LLIL_FLAG(Emulator* emu, const LowLevelILInstruction* instr)
@@ -94,8 +100,11 @@ double visit_LLIL_ADD(Emulator* emu, const LowLevelILInstruction* instr)
 
 double visit_LLIL_SUB(Emulator* emu, const LowLevelILInstruction* instr)
 {
-	emu->log->LogError("LLIL_SUB @ 0x%08lx is unimplemented", instr->address);
-	return -1;
+	const auto lhs_instr = instr->GetLeftExpr<LLIL_SUB>();
+	const auto rhs_instr = instr->GetRightExpr<LLIL_SUB>();
+	const auto lhs = emu->visit(&lhs_instr);
+	const auto rhs = emu->visit(&rhs_instr);
+	return lhs - rhs;
 }
 
 double visit_LLIL_SBB(Emulator* emu, const LowLevelILInstruction* instr)
@@ -106,20 +115,29 @@ double visit_LLIL_SBB(Emulator* emu, const LowLevelILInstruction* instr)
 
 double visit_LLIL_AND(Emulator* emu, const LowLevelILInstruction* instr)
 {
-	emu->log->LogError("LLIL_AND @ 0x%08lx is unimplemented", instr->address);
-	return -1;
+	const auto lhs_instr = instr->GetLeftExpr<LLIL_AND>();
+	const auto rhs_instr = instr->GetRightExpr<LLIL_AND>();
+	const auto lhs = static_cast<uint64_t>(emu->visit(&lhs_instr));
+	const auto rhs = static_cast<uint64_t>(emu->visit(&rhs_instr));
+	return static_cast<double>(lhs & rhs);
 }
 
 double visit_LLIL_OR(Emulator* emu, const LowLevelILInstruction* instr)
 {
-	emu->log->LogError("LLIL_OR @ 0x%08lx is unimplemented", instr->address);
-	return -1;
+	const auto lhs_instr = instr->GetLeftExpr<LLIL_OR>();
+	const auto rhs_instr = instr->GetRightExpr<LLIL_OR>();
+	const auto lhs = static_cast<uint64_t>(emu->visit(&lhs_instr));
+	const auto rhs = static_cast<uint64_t>(emu->visit(&rhs_instr));
+	return static_cast<double>(lhs | rhs);
 }
 
 double visit_LLIL_XOR(Emulator* emu, const LowLevelILInstruction* instr)
 {
-	emu->log->LogError("LLIL_XOR @ 0x%08lx is unimplemented", instr->address);
-	return -1;
+	const auto lhs_instr = instr->GetLeftExpr<LLIL_OR>();
+	const auto rhs_instr = instr->GetRightExpr<LLIL_OR>();
+	const auto lhs = static_cast<uint64_t>(emu->visit(&lhs_instr));
+	const auto rhs = static_cast<uint64_t>(emu->visit(&rhs_instr));
+	return static_cast<double>(lhs ^ rhs);
 }
 
 double visit_LLIL_LSL(Emulator* emu, const LowLevelILInstruction* instr)
