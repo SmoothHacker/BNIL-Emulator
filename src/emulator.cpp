@@ -25,6 +25,11 @@ void Emulator::dumpRegisters()
 	}
 }
 
+uint64_t Emulator::readRegister(const uint32_t reg)
+{
+	return static_cast<uint64_t>(this->regs[reg]);
+}
+
 Emulator::Emulator(BinaryView* bv)
 {
 	this->log = LogRegistry::GetLogger(plugin_name);

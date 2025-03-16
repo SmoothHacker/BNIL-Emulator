@@ -46,6 +46,7 @@ public:
 	double getRegister(uint32_t reg);
 	Ref<BinaryView> getBinaryView();
 	void dumpRegisters();
+	uint64_t readRegister(uint32_t reg);
 	double visit(const LowLevelILInstruction* instr);
 	void call_function(uint64_t func_addr, uint64_t retInstrIdx);
 	void return_from_function();
