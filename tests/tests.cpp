@@ -2,10 +2,49 @@
 #include <cinttypes>
 #include <emulator.hpp>
 #include <string>
-#include <vector>
 #include <unicorn/unicorn.h>
+#include <vector>
 
 #include "registers.hpp"
+static int regs[] = {
+	UC_X86_REG_RAX,
+	UC_X86_REG_RBP,
+	UC_X86_REG_RBX,
+	UC_X86_REG_RCX,
+	UC_X86_REG_RDI,
+	UC_X86_REG_RDX,
+	UC_X86_REG_RIP,
+	UC_X86_REG_RSI,
+	UC_X86_REG_RSP
+};
+
+constexpr char reg_names[9][4] = {
+	"RAX",
+	"RBP",
+	"RBX",
+	"RCX",
+	"RDI",
+	"RDX",
+	"RIP",
+	"RSI",
+	"RSP"
+};
+
+static void DumpState(uc_engine* uc)
+{
+	void* ptrs[9];
+	uint64_t vals[9] = {};
+
+	const auto log = LogRegistry::GetLogger(plugin_name);
+	for (int i = 0; i < 9; i++) {
+		ptrs[i] = &vals[i];
+	}
+	uc_reg_read_batch(uc, regs, ptrs, 9);
+	log->LogDebug("Unicorn Emulator State:");
+	for (int i = 0; i < 9; i++) {
+		log->LogDebug("[%s]: 0x%08x", reg_names[i], vals[i]);
+	}
+}
 
 static Emulator* CreateEmuInstance(const std::string& input, Ref<LowLevelILFunction>& llil_func)
 {
@@ -68,8 +107,8 @@ static uc_engine* CreateUnicornInstance(const std::string& input)
 		return nullptr;
 	}
 
-	uc_mem_map(uc, 0x1000, 0x100000, UC_PROT_ALL);
-	//uc_mem_map(uc, 0x2000, 0x1000, UC_PROT_READ | UC_PROT_WRITE);
+	uc_mem_map(uc, 0x0, 0x1000, UC_PROT_ALL);
+	uc_mem_map(uc, 0x1000, 0x1000, UC_PROT_READ | UC_PROT_WRITE);
 
 	if (uc_mem_write(uc, 0x0, db.GetData(), db.GetLength())) {
 		log->LogError("Failed to write emulation code to memory, quit!\n");
@@ -77,9 +116,10 @@ static uc_engine* CreateUnicornInstance(const std::string& input)
 	}
 
 	// emulate testcase
-	err = uc_emu_start(uc, 0x0, db.GetLength(), 0x0, 0x0);
+	err = uc_emu_start(uc, 0x0, db.GetLength(), 0x0, 0x3);
 	if (err) {
 		log->LogError("Failed on uc_emu_start() with error returned %u: %s\n", err, uc_strerror(err));
+		DumpState(uc);
 		return nullptr;
 	}
 
@@ -87,17 +127,19 @@ static uc_engine* CreateUnicornInstance(const std::string& input)
 	return uc;
 }
 
-void CheckResults(Emulator* emu, uc_engine* uc)
+static void CheckResults(Emulator* emu, uc_engine* uc)
 {
 	const auto bv = emu->getBinaryView();
 	const auto arch = bv->GetDefaultArchitecture();
 	auto regs = arch->GetFullWidthRegisters();
+	const auto log = LogRegistry::GetLogger(plugin_name);
 
 	uint64_t regValue = 0;
-	for (auto &[regName, ucRegIdx] : registers) {
+	for (auto& [regName, ucRegIdx] : registers) {
 		const auto regId = arch->GetRegisterByName(regName);
 		const auto emuVal = static_cast<uint64_t>(emu->getRegister(regId));
 		uc_reg_read(uc, ucRegIdx, &regValue);
+		log->LogDebug("Checking Register: %s", regName.c_str());
 		CHECK(emuVal == regValue);
 	}
 	uc_close(uc);
