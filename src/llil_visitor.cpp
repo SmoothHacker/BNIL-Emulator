@@ -25,8 +25,7 @@ double visit_LLIL_LOAD(Emulator* emu, const LowLevelILInstruction* instr)
 {
 	const auto src = instr->GetSourceExpr<LLIL_LOAD>();
 	const auto address = emu->visit(&src);
-	emu->readMemory(static_cast<uint64_t>(address), instr->size);
-	return -1;
+	return emu->readMemory(static_cast<uint64_t>(address), instr->size);
 }
 
 double visit_LLIL_STORE(Emulator* emu, const LowLevelILInstruction* instr)
@@ -41,14 +40,14 @@ double visit_LLIL_STORE(Emulator* emu, const LowLevelILInstruction* instr)
 
 double visit_LLIL_PUSH(Emulator* emu, const LowLevelILInstruction* instr)
 {
-	const stackFrame sf = emu->getTopCallstack();
+	const stackFrame* sf = emu->getTopCallstack();
 	const auto srcExpr = instr->GetSourceExpr<LLIL_PUSH>();
 	double const pushVal = emu->visit(&srcExpr);
 
 	// get stack pointer
 	const auto arch = emu->getBinaryView()->GetDefaultArchitecture();
 	const auto sp = arch->GetStackPointerRegister();
-	sf.stack[sp] = pushVal;
+	sf->stack[sp] = pushVal;
 	emu->setRegister(sp, sp + arch->GetDefaultIntegerSize());
 	return 0;
 }
@@ -71,13 +70,13 @@ double visit_LLIL_REG_SPLIT(Emulator* emu, const LowLevelILInstruction* instr)
 	return -1;
 }
 
-double visit_LLIL_CONST(Emulator* emu, const LowLevelILInstruction* instr)
+double visit_LLIL_CONST(const LowLevelILInstruction* instr)
 {
 	const auto constVal = instr->GetConstant();
 	return static_cast<double>(constVal);
 }
 
-double visit_LLIL_CONST_PTR(Emulator* emu, const LowLevelILInstruction* instr)
+double visit_LLIL_CONST_PTR(const LowLevelILInstruction* instr)
 {
 	const auto constant = instr->GetConstant<LLIL_CONST_PTR>();
 	return static_cast<double>(constant);

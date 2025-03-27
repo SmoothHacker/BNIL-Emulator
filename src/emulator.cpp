@@ -36,7 +36,7 @@ Emulator::Emulator(BinaryView* bv)
 
 	this->log->LogDebug("Emulator Memory Map: ");
 	for (const Ref<Segment>& segment : bv->GetSegments()) {
-		this->memory.push_back({ new uint8_t[segment->GetLength()], segment->GetStart(), segment->GetEnd() });
+		this->memory.push_back({ new uint8_t[segment->GetLength()](), segment->GetStart(), segment->GetEnd() });
 		this->log->LogDebug("0x%08llx <-> 0x%08llx", segment->GetStart(), segment->GetEnd());
 	}
 	this->bv = bv;
@@ -83,7 +83,7 @@ void Emulator::emulate_llil(const Ref<LowLevelILFunction>& llil_func)
 
 		auto sym = this->bv->GetSymbolByAddress(sf.llilFunction->GetCurrentAddress());
 		log->LogDebug("Emulating Instr @ idx [%d] addr: 0x%08llx", sf.curInstrIdx, instr.address);
-		//  Start visitor
+		// Start visitor
 		this->visit(&instr);
 
 		if (this->callstack.empty())
@@ -148,9 +148,9 @@ void Emulator::writeMemory(const uint64_t address, const uint64_t value, const u
 	if (size == 1) {
 		*(seg->mem + (address - seg->startAddr)) = value;
 	} else if (size == 2) {
-		*reinterpret_cast<uint16_t*>(seg->mem + (address - seg->startAddr)) = value;
+		*reinterpret_cast<uint16_t*>(seg->mem + (address - seg->startAddr)) = (uint16_t)value;
 	} else if (size == 4) {
-		*reinterpret_cast<uint32_t*>(seg->mem + (address - seg->startAddr)) = value;
+		*reinterpret_cast<uint32_t*>(seg->mem + (address - seg->startAddr)) = (uint32_t)value;
 	} else { // size is assumed to be uint64_t
 		*reinterpret_cast<uint64_t*>(seg->mem + (address - seg->startAddr)) = value;
 	}
@@ -184,8 +184,8 @@ double Emulator::visit(const LowLevelILInstruction* instr)
 		case LLIL_POP: ret = visit_LLIL_POP(this, instr); break;
 		case LLIL_REG: ret = visit_LLIL_REG(this, instr); break;
 		case LLIL_REG_SPLIT: ret = visit_LLIL_REG_SPLIT(this, instr); break;
-		case LLIL_CONST: ret = visit_LLIL_CONST(this, instr); break;
-		case LLIL_CONST_PTR: ret = visit_LLIL_CONST_PTR(this, instr); break;
+		case LLIL_CONST: ret = visit_LLIL_CONST(instr); break;
+		case LLIL_CONST_PTR: ret = visit_LLIL_CONST_PTR(instr); break;
 		case LLIL_FLAG: ret = visit_LLIL_FLAG(this, instr); break;
 		case LLIL_ADD: ret = visit_LLIL_ADD(this, instr); break;
 		case LLIL_SUB: ret = visit_LLIL_SUB(this, instr); break;

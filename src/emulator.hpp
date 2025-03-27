@@ -41,7 +41,7 @@ public:
 	explicit Emulator(BinaryView* bv);
 	~Emulator();
 
-	[[nodiscard]] stackFrame getTopCallstack() const { return callstack.top(); }
+	[[nodiscard]] const stackFrame* getTopCallstack() const { return &callstack.top(); }
 	void setRegister(uint32_t reg, double value);
 	double getRegister(uint32_t reg);
 	Ref<BinaryView> getBinaryView();
