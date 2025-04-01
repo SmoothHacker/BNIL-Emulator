@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <catch2/catch_test_macros.hpp>
 #include <cinttypes>
 #include <emulator.hpp>
@@ -6,6 +7,7 @@
 #include <vector>
 
 #include "registers.hpp"
+
 static int regs[] = {
 	UC_X86_REG_RAX,
 	UC_X86_REG_RBP,
@@ -116,7 +118,7 @@ static uc_engine* CreateUnicornInstance(const std::string& input)
 	}
 
 	// emulate testcase
-	err = uc_emu_start(uc, 0x0, db.GetLength(), 0x0, 0x3);
+	err = uc_emu_start(uc, 0x0, db.GetLength(), 0x0, std::ranges::count(input, '\n'));
 	if (err) {
 		log->LogError("Failed on uc_emu_start() with error returned %u: %s\n", err, uc_strerror(err));
 		DumpState(uc);
@@ -155,8 +157,12 @@ TEST_CASE("BasicProgram1")
 	const auto emu = CreateEmuInstance(input, llil_func);
 	emu->emulate_llil(llil_func);
 
-	const auto uc = CreateUnicornInstance(input);
-	CheckResults(emu, uc);
+	if (const auto uc = CreateUnicornInstance(input); uc == nullptr) {
+		const auto log = LogRegistry::GetLogger(plugin_name);
+		log->LogError("Failed to create unicorn instance");
+	} else {
+		CheckResults(emu, uc);
+	}
 	delete emu;
 }
 
@@ -170,7 +176,30 @@ TEST_CASE("BasicProgram2")
 	const auto emu = CreateEmuInstance(input, llil_func);
 	emu->emulate_llil(llil_func);
 
-	const auto uc = CreateUnicornInstance(input);
-	CheckResults(emu, uc);
+	if (const auto uc = CreateUnicornInstance(input); uc == nullptr) {
+		const auto log = LogRegistry::GetLogger(plugin_name);
+		log->LogError("Failed to create unicorn instance");
+	} else {
+		CheckResults(emu, uc);
+	}
+	delete emu;
+}
+
+TEST_CASE("BasicProgram3")
+{
+	const std::string input = "mov rcx, 0xdead;\n"
+							  "push rcx;\n"
+							  "pop rax;\n"
+							  "retn 0;";
+	Ref<LowLevelILFunction> llil_func;
+	const auto emu = CreateEmuInstance(input, llil_func);
+	emu->emulate_llil(llil_func);
+
+	if (const auto uc = CreateUnicornInstance(input); uc == nullptr) {
+		const auto log = LogRegistry::GetLogger(plugin_name);
+		log->LogError("Failed to create unicorn instance");
+	} else {
+		CheckResults(emu, uc);
+	}
 	delete emu;
 }
