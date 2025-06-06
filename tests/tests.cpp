@@ -86,7 +86,10 @@ static Emulator* CreateEmuInstance(const std::string& input, Ref<LowLevelILFunct
 		}
 	}
 	llil_func = il;
-	return new Emulator(bv);
+	const auto emu = new Emulator(bv);
+	const auto sp_reg_idx = emu->getBinaryView()->GetDefaultArchitecture()->GetStackPointerRegister();
+	emu->setRegister(sp_reg_idx, 0x2000);
+	return emu;
 }
 
 static uc_engine* CreateUnicornInstance(const std::string& input)
@@ -109,8 +112,11 @@ static uc_engine* CreateUnicornInstance(const std::string& input)
 		return nullptr;
 	}
 
-	uc_mem_map(uc, 0x0, 0x1000, UC_PROT_ALL);
-	uc_mem_map(uc, 0x1000, 0x1000, UC_PROT_READ | UC_PROT_WRITE);
+	uc_mem_map(uc, 0x0, 0x1000, UC_PROT_ALL); // CODE
+	uc_mem_map(uc, 0x1000, 0x1000, UC_PROT_READ | UC_PROT_WRITE); // STACK
+
+	constexpr uint64_t sp = 0x2000;
+	uc_reg_write(uc, UC_X86_REG_SP, &sp);
 
 	if (uc_mem_write(uc, 0x0, db.GetData(), db.GetLength())) {
 		log->LogError("Failed to write emulation code to memory, quit!\n");

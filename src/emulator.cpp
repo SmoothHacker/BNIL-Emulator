@@ -1,12 +1,12 @@
 #include "emulator.hpp"
 #include "llil_visitor.hpp"
 
-void Emulator::setRegister(const uint32_t reg, const double value)
+void Emulator::setRegister(const uint32_t reg, const uint64_t value)
 {
 	this->regs[reg] = value;
 }
 
-double Emulator::getRegister(const uint32_t reg)
+uint64_t Emulator::getRegister(const uint32_t reg)
 {
 	return this->regs[reg];
 }
@@ -148,9 +148,9 @@ void Emulator::writeMemory(const uint64_t address, const uint64_t value, const u
 	if (size == 1) {
 		*(seg->mem + (address - seg->startAddr)) = value;
 	} else if (size == 2) {
-		*reinterpret_cast<uint16_t*>(seg->mem + (address - seg->startAddr)) = (uint16_t)value;
+		*reinterpret_cast<uint16_t*>(seg->mem + (address - seg->startAddr)) = static_cast<uint16_t>(value);
 	} else if (size == 4) {
-		*reinterpret_cast<uint32_t*>(seg->mem + (address - seg->startAddr)) = (uint32_t)value;
+		*reinterpret_cast<uint32_t*>(seg->mem + (address - seg->startAddr)) = static_cast<uint32_t>(value);
 	} else { // size is assumed to be uint64_t
 		*reinterpret_cast<uint64_t*>(seg->mem + (address - seg->startAddr)) = value;
 	}
@@ -158,9 +158,19 @@ void Emulator::writeMemory(const uint64_t address, const uint64_t value, const u
 
 void Emulator::call_function(const uint64_t func_addr, const uint64_t retInstrIdx)
 {
-	const auto func = this->bv->GetAnalysisFunction(this->bv->GetDefaultPlatform(), func_addr);
+	const auto func = this->getBinaryView()->GetAnalysisFunction(this->bv->GetDefaultPlatform(), func_addr);
 	const auto llil_func = func->GetLowLevelIL();
-	this->callstack.emplace(stackFrame { .llilFunction = llil_func, .curInstrIdx = retInstrIdx });
+
+	// Get Stack Size
+	const auto stack_layout = func->GetStackLayout();
+	const auto& highest_variable = stack_layout.at(0).at(0);
+	const auto stack_var_offset = highest_variable.var.storage;
+	const auto total_size = stack_var_offset + highest_variable.type->GetWidth();
+
+	// Get Stack Pointer Value
+	const auto sp_reg = this->getBinaryView()->GetDefaultArchitecture()->GetStackPointerRegister();
+	this->getRegister(sp_reg);
+	this->callstack.emplace(stackFrame { .stack = new uint8_t[total_size](), .llilFunction = llil_func, .sf_base = static_cast<uint64_t>(this->getRegister(sp_reg)), .curInstrIdx = retInstrIdx });
 }
 
 void Emulator::return_from_function()
@@ -168,12 +178,12 @@ void Emulator::return_from_function()
 	this->callstack.pop();
 }
 
-double Emulator::visit(const LowLevelILInstruction* instr)
+uint64_t Emulator::visit(const LowLevelILInstruction* instr)
 {
 	const auto& log = this->log;
 	log->LogDebug("\tVisiting [%s]", LLIL_NAME[instr->operation]);
 
-	double ret = 0.0;
+	uint64_t ret = 0;
 	switch (instr->operation) {
 		case LLIL_SET_REG: ret = visit_LLIL_SET_REG(this, instr); break;
 		case LLIL_SET_REG_SPLIT: ret = visit_LLIL_SET_REG_SPLIT(this, instr); break;
