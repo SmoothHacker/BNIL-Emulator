@@ -6,6 +6,7 @@ include_directories(libemulator)
 
 # Add unicorn engine for testing
 find_package(PkgConfig REQUIRED)
+set(ENV{PKG_CONFIG_PATH} "ENV{HOME}/Desktop/unicorn/INSTALL/lib/pkgconfig")
 pkg_check_modules(Unicorn REQUIRED IMPORTED_TARGET GLOBAL unicorn)
 
 
