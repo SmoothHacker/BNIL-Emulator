@@ -8,31 +8,9 @@
 
 #include "registers.hpp"
 
-static int regs[] = {
-	UC_X86_REG_RAX,
-	UC_X86_REG_RBP,
-	UC_X86_REG_RBX,
-	UC_X86_REG_RCX,
-	UC_X86_REG_RDI,
-	UC_X86_REG_RDX,
-	UC_X86_REG_RIP,
-	UC_X86_REG_RSI,
-	UC_X86_REG_RSP
-};
+namespace {
 
-constexpr char reg_names[9][4] = {
-	"RAX",
-	"RBP",
-	"RBX",
-	"RCX",
-	"RDI",
-	"RDX",
-	"RIP",
-	"RSI",
-	"RSP"
-};
-
-static void DumpState(uc_engine* uc)
+void DumpState(uc_engine* uc)
 {
 	void* ptrs[9];
 	uint64_t vals[9] = {};
@@ -48,7 +26,7 @@ static void DumpState(uc_engine* uc)
 	}
 }
 
-static Emulator* CreateEmuInstance(const std::string& input, Ref<LowLevelILFunction>& llil_func)
+Emulator* CreateEmuInstance(const std::string& input, Ref<LowLevelILFunction>& llil_func)
 {
 	SetBundledPluginDirectory(GetBundledPluginDirectory());
 	InitPlugins(true);
@@ -59,7 +37,7 @@ static Emulator* CreateEmuInstance(const std::string& input, Ref<LowLevelILFunct
 	std::string errors;
 	arch->Assemble(input, 0x0, db, errors);
 	if (!errors.empty())
-		printf("Asm errors: %s", errors.c_str());
+		printf("Asm errors [%s]", errors.c_str());
 
 	const Ref<BinaryView> bv = Load(db, true);
 	bv->SetDefaultPlatform(plat);
@@ -92,7 +70,7 @@ static Emulator* CreateEmuInstance(const std::string& input, Ref<LowLevelILFunct
 	return emu;
 }
 
-static uc_engine* CreateUnicornInstance(const std::string& input)
+uc_engine* CreateUnicornInstance(const std::string& input)
 {
 	uc_engine* uc;
 
@@ -112,7 +90,7 @@ static uc_engine* CreateUnicornInstance(const std::string& input)
 		return nullptr;
 	}
 
-	uc_mem_map(uc, 0x0, 0x1000, UC_PROT_ALL); // CODE
+	uc_mem_map(uc, 0x0, 0x1000, UC_PROT_ALL);                     // CODE
 	uc_mem_map(uc, 0x1000, 0x1000, UC_PROT_READ | UC_PROT_WRITE); // STACK
 
 	constexpr uint64_t sp = 0x2000;
@@ -135,7 +113,7 @@ static uc_engine* CreateUnicornInstance(const std::string& input)
 	return uc;
 }
 
-static void CheckResults(Emulator* emu, uc_engine* uc)
+void CheckResults(Emulator* emu, uc_engine* uc)
 {
 	const auto bv = emu->getBinaryView();
 	const auto arch = bv->GetDefaultArchitecture();
@@ -145,12 +123,13 @@ static void CheckResults(Emulator* emu, uc_engine* uc)
 	uint64_t regValue = 0;
 	for (auto& [regName, ucRegIdx] : registers) {
 		const auto regId = arch->GetRegisterByName(regName);
-		const auto emuVal = static_cast<uint64_t>(emu->getRegister(regId));
+		const auto emuVal = emu->getRegister(regId);
 		uc_reg_read(uc, ucRegIdx, &regValue);
 		log->LogDebug("Checking Register: %s", regName.c_str());
 		CHECK(emuVal == regValue);
 	}
 	uc_close(uc);
+}
 }
 
 TEST_CASE("BasicProgram1")
