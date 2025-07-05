@@ -38,7 +38,7 @@ uint64_t visit_LLIL_TAILCALL(Emulator* emu, const LowLevelILInstruction* instr);
 uint64_t visit_LLIL_RET(Emulator* emu, const LowLevelILInstruction* instr);
 uint64_t visit_LLIL_NORET(Emulator* emu, const LowLevelILInstruction* instr);
 uint64_t visit_LLIL_IF(Emulator* emu, const LowLevelILInstruction* instr);
-uint64_t visit_LLIL_GOTO(Emulator* emu, const LowLevelILInstruction* instr);
+uint64_t visit_LLIL_GOTO(const LowLevelILInstruction* instr);
 uint64_t visit_LLIL_CMP_E(Emulator* emu, const LowLevelILInstruction* instr);
 uint64_t visit_LLIL_CMP_NE(Emulator* emu, const LowLevelILInstruction* instr);
 uint64_t visit_LLIL_CMP_SLT(Emulator* emu, const LowLevelILInstruction* instr);
@@ -52,6 +52,13 @@ uint64_t visit_LLIL_CMP_UGT(Emulator* emu, const LowLevelILInstruction* instr);
 uint64_t visit_LLIL_TEST_BIT(Emulator* emu, const LowLevelILInstruction* instr);
 uint64_t visit_LLIL_INTRINSIC(Emulator* emu, const LowLevelILInstruction* instr);
 uint64_t visit_LLIL_UNDEF(Emulator* emu, const LowLevelILInstruction* instr);
+
+// Helpers
+
+/*
+ * Useful for evaluating arithmetic and comparison instructions that only have a LeftExpr and a RightExpr
+ */
+uint64_t BinaryVisitorHelper(Emulator* emu, const LowLevelILInstruction* instr, const std::function<bool(uint64_t, uint64_t)>& condition);
 
 constexpr const char* const LLIL_NAME[] = {
 	"LLIL_NOP",

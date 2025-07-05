@@ -1,5 +1,14 @@
 #include "emulator.hpp"
 
+uint64_t BinaryVisitorHelper(Emulator* emu, const LowLevelILInstruction* instr, const std::function<bool(uint64_t, uint64_t)>& condition)
+{
+	const auto lhs_instr = instr->GetLeftExpr();
+	const auto rhs_instr = instr->GetRightExpr();
+	const auto lhs = emu->visit(&lhs_instr);
+	const auto rhs = emu->visit(&rhs_instr);
+	return condition(lhs, rhs);
+}
+
 uint64_t visit_LLIL_SET_REG(Emulator* emu, const LowLevelILInstruction* instr)
 {
 	const auto reg = instr->GetDestRegister<LLIL_SET_REG>();
@@ -53,13 +62,13 @@ uint64_t visit_LLIL_PUSH(Emulator* emu, const LowLevelILInstruction* instr)
 			*(sf->stack + (static_cast<uint64_t>(sp) - sf->sf_base)) = static_cast<uint8_t>(pushVal);
 			break;
 		case 2:
-			*reinterpret_cast<uint16_t *>(sf->stack + (static_cast<uint64_t>(sp) - sf->sf_base)) = static_cast<uint16_t>(pushVal);
+			*reinterpret_cast<uint16_t*>(sf->stack + (static_cast<uint64_t>(sp) - sf->sf_base)) = static_cast<uint16_t>(pushVal);
 			break;
 		case 4:
-			*reinterpret_cast<uint32_t *>(sf->stack + (static_cast<uint64_t>(sp) - sf->sf_base)) = static_cast<uint32_t>(pushVal);
+			*reinterpret_cast<uint32_t*>(sf->stack + (static_cast<uint64_t>(sp) - sf->sf_base)) = static_cast<uint32_t>(pushVal);
 			break;
 		case 8:
-			*reinterpret_cast<uint64_t *>(sf->stack + (static_cast<uint64_t>(sp) - sf->sf_base)) = static_cast<uint64_t>(pushVal);
+			*reinterpret_cast<uint64_t*>(sf->stack + (static_cast<uint64_t>(sp) - sf->sf_base)) = static_cast<uint64_t>(pushVal);
 			break;
 		default:
 			break;
@@ -86,17 +95,17 @@ uint64_t visit_LLIL_POP(Emulator* emu, const LowLevelILInstruction* instr)
 			*stack_ptr = 0;
 		} break;
 		case 2: {
-			const auto stack_ptr = reinterpret_cast<uint16_t *>(sf->stack);
+			const auto stack_ptr = reinterpret_cast<uint16_t*>(sf->stack);
 			ret_val = *stack_ptr;
 			*stack_ptr = 0;
 		} break;
 		case 4: {
-			const auto stack_ptr = reinterpret_cast<uint32_t *>(sf->stack);
+			const auto stack_ptr = reinterpret_cast<uint32_t*>(sf->stack);
 			ret_val = *stack_ptr;
 			*stack_ptr = 0;
 		} break;
 		case 8: {
-			const auto stack_ptr = reinterpret_cast<uint64_t *>(sf->stack);
+			const auto stack_ptr = reinterpret_cast<uint64_t*>(sf->stack);
 			ret_val = *stack_ptr;
 			*stack_ptr = 0;
 		} break;
@@ -141,20 +150,16 @@ uint64_t visit_LLIL_FLAG(Emulator* emu, const LowLevelILInstruction* instr)
 
 uint64_t visit_LLIL_ADD(Emulator* emu, const LowLevelILInstruction* instr)
 {
-	const auto lhs_instr = instr->GetLeftExpr<LLIL_ADD>();
-	const auto rhs_instr = instr->GetRightExpr<LLIL_ADD>();
-	const auto lhs = emu->visit(&lhs_instr);
-	const auto rhs = emu->visit(&rhs_instr);
-	return lhs + rhs;
+	return BinaryVisitorHelper(emu, instr, [](const auto lhs, const auto rhs) {
+		return lhs + rhs;
+	});
 }
 
 uint64_t visit_LLIL_SUB(Emulator* emu, const LowLevelILInstruction* instr)
 {
-	const auto lhs_instr = instr->GetLeftExpr<LLIL_SUB>();
-	const auto rhs_instr = instr->GetRightExpr<LLIL_SUB>();
-	const auto lhs = emu->visit(&lhs_instr);
-	const auto rhs = emu->visit(&rhs_instr);
-	return lhs - rhs;
+	return BinaryVisitorHelper(emu, instr, [](const auto lhs, const auto rhs) {
+		return lhs - rhs;
+	});
 }
 
 uint64_t visit_LLIL_SBB(Emulator* emu, const LowLevelILInstruction* instr)
@@ -165,53 +170,51 @@ uint64_t visit_LLIL_SBB(Emulator* emu, const LowLevelILInstruction* instr)
 
 uint64_t visit_LLIL_AND(Emulator* emu, const LowLevelILInstruction* instr)
 {
-	const auto lhs_instr = instr->GetLeftExpr<LLIL_AND>();
-	const auto rhs_instr = instr->GetRightExpr<LLIL_AND>();
-	const auto lhs = emu->visit(&lhs_instr);
-	const auto rhs = emu->visit(&rhs_instr);
-	return lhs & rhs;
+	return BinaryVisitorHelper(emu, instr, [](const auto lhs, const auto rhs) {
+		return lhs & rhs;
+	});
 }
 
 uint64_t visit_LLIL_OR(Emulator* emu, const LowLevelILInstruction* instr)
 {
-	const auto lhs_instr = instr->GetLeftExpr<LLIL_OR>();
-	const auto rhs_instr = instr->GetRightExpr<LLIL_OR>();
-	const auto lhs = emu->visit(&lhs_instr);
-	const auto rhs = emu->visit(&rhs_instr);
-	return lhs | rhs;
+	return BinaryVisitorHelper(emu, instr, [](const auto lhs, const auto rhs) {
+		return lhs | rhs;
+	});
 }
 
 uint64_t visit_LLIL_XOR(Emulator* emu, const LowLevelILInstruction* instr)
 {
-	const auto lhs_instr = instr->GetLeftExpr<LLIL_OR>();
-	const auto rhs_instr = instr->GetRightExpr<LLIL_OR>();
-	const auto lhs = emu->visit(&lhs_instr);
-	const auto rhs = emu->visit(&rhs_instr);
-	return lhs ^ rhs;
+	return BinaryVisitorHelper(emu, instr, [](const auto lhs, const auto rhs) {
+		return lhs ^ rhs;
+	});
 }
 
 uint64_t visit_LLIL_LSL(Emulator* emu, const LowLevelILInstruction* instr)
 {
-	emu->log->LogError("LLIL_LSL @ 0x%08lx is unimplemented", instr->address);
-	return -1;
+	return BinaryVisitorHelper(emu, instr, [](const auto lhs, const auto rhs) {
+		return lhs << rhs;
+	});
 }
 
 uint64_t visit_LLIL_LSR(Emulator* emu, const LowLevelILInstruction* instr)
 {
-	emu->log->LogError("LLIL_LSR @ 0x%08lx is unimplemented", instr->address);
-	return -1;
+	return BinaryVisitorHelper(emu, instr, [](const auto lhs, const auto rhs) {
+		return lhs >> rhs;
+	});
 }
 
 uint64_t visit_LLIL_ASR(Emulator* emu, const LowLevelILInstruction* instr)
 {
-	emu->log->LogError("LLIL_ASR @ 0x%08lx is unimplemented", instr->address);
-	return -1;
+	return BinaryVisitorHelper(emu, instr, [](const auto lhs, const auto rhs) {
+		return static_cast<uint64_t>(static_cast<int64_t>(lhs) >> static_cast<int64_t>(rhs));
+	});
 }
 
 uint64_t visit_LLIL_MUL(Emulator* emu, const LowLevelILInstruction* instr)
 {
-	emu->log->LogError("LLIL_MUL @ 0x%08lx is unimplemented", instr->address);
-	return -1;
+	return BinaryVisitorHelper(emu, instr, [](const auto lhs, const auto rhs) {
+		return lhs * rhs;
+	});
 }
 
 uint64_t visit_LLIL_DIVU_DP(Emulator* emu, const LowLevelILInstruction* instr)
@@ -234,14 +237,16 @@ uint64_t visit_LLIL_MODU_DP(Emulator* emu, const LowLevelILInstruction* instr)
 
 uint64_t visit_LLIL_MODS_DP(Emulator* emu, const LowLevelILInstruction* instr)
 {
-	emu->log->LogError("LLIL_MODS_DP @ 0x%08lx is unimplemented", instr->address);
-	return -1;
+	return BinaryVisitorHelper(emu, instr, [](const auto lhs, const auto rhs) -> uint64_t {
+		return static_cast<int64_t>(lhs) % static_cast<int64_t>(rhs);
+	});
 }
 
 uint64_t visit_LLIL_NEG(Emulator* emu, const LowLevelILInstruction* instr)
 {
-	emu->log->LogError("LLIL_NEG @ 0x%08lx is unimplemented", instr->address);
-	return -1;
+	const auto source_instr = instr->GetSourceExpr<LLIL_NEG>();
+	const auto src = emu->visit(&source_instr);
+	return 0 - src;
 }
 
 uint64_t visit_LLIL_SX(Emulator* emu, const LowLevelILInstruction* instr)
@@ -300,74 +305,86 @@ uint64_t visit_LLIL_NORET(Emulator* emu, const LowLevelILInstruction* instr)
 
 uint64_t visit_LLIL_IF(Emulator* emu, const LowLevelILInstruction* instr)
 {
-	emu->log->LogError("LLIL_IF @ 0x%08lx is unimplemented", instr->address);
-	return -1;
+	const auto condition_instr = instr->GetConditionExpr<LLIL_IF>();
+	if (emu->visit(&condition_instr))
+		return instr->GetTrueTarget<LLIL_IF>();
+	return instr->GetFalseTarget<LLIL_IF>(); // return instruction index
 }
 
-uint64_t visit_LLIL_GOTO(Emulator* emu, const LowLevelILInstruction* instr)
+uint64_t visit_LLIL_GOTO(const LowLevelILInstruction* instr)
 {
-	emu->log->LogError("LLIL_GOTO @ 0x%08lx is unimplemented", instr->address);
-	return -1;
+	const auto jump_target = instr->GetTarget<LLIL_GOTO>();
+	return jump_target;
 }
 
 uint64_t visit_LLIL_CMP_E(Emulator* emu, const LowLevelILInstruction* instr)
 {
-	emu->log->LogError("LLIL_CMP_E @ 0x%08lx is unimplemented", instr->address);
-	return -1;
+	return BinaryVisitorHelper(emu, instr, [](const auto lhs, const auto rhs) {
+		return lhs == rhs;
+	});
 }
 
 uint64_t visit_LLIL_CMP_NE(Emulator* emu, const LowLevelILInstruction* instr)
 {
-	emu->log->LogError("LLIL_CMP_NE @ 0x%08lx is unimplemented", instr->address);
-	return -1;
+	return BinaryVisitorHelper(emu, instr, [](const auto lhs, const auto rhs) {
+		return lhs != rhs;
+	});
 }
 
 uint64_t visit_LLIL_CMP_SLT(Emulator* emu, const LowLevelILInstruction* instr)
 {
-	emu->log->LogError("LLIL_CMP_SLT @ 0x%08lx is unimplemented", instr->address);
-	return -1;
+	return BinaryVisitorHelper(emu, instr, [](const auto lhs, const auto rhs) {
+		return static_cast<int64_t>(lhs) < static_cast<int64_t>(rhs);
+	});
 }
 
 uint64_t visit_LLIL_CMP_ULT(Emulator* emu, const LowLevelILInstruction* instr)
 {
-	emu->log->LogError("LLIL_CMP_ULT @ 0x%08lx is unimplemented", instr->address);
-	return -1;
+	return BinaryVisitorHelper(emu, instr, [](const auto lhs, const auto rhs) {
+		return lhs < rhs;
+	});
 }
 
 uint64_t visit_LLIL_CMP_SLE(Emulator* emu, const LowLevelILInstruction* instr)
 {
-	emu->log->LogError("LLIL_CMP_SLE @ 0x%08lx is unimplemented", instr->address);
-	return -1;
+	return BinaryVisitorHelper(emu, instr, [](const auto lhs, const auto rhs) {
+		return static_cast<int64_t>(lhs) <= static_cast<int64_t>(rhs);
+	});
 }
 
 uint64_t visit_LLIL_CMP_ULE(Emulator* emu, const LowLevelILInstruction* instr)
 {
-	emu->log->LogError("LLIL_CMP_ULE @ 0x%08lx is unimplemented", instr->address);
-	return -1;
+	return BinaryVisitorHelper(emu, instr, [](const auto lhs, const auto rhs) {
+		return lhs <= rhs;
+	});
 }
 
 uint64_t visit_LLIL_CMP_SGE(Emulator* emu, const LowLevelILInstruction* instr)
 {
-	emu->log->LogError("LLIL_CMP_SGE @ 0x%08lx is unimplemented", instr->address);
-	return -1;
+	return BinaryVisitorHelper(emu, instr, [](const auto lhs, const auto rhs) {
+		return static_cast<int64_t>(lhs) >= static_cast<int64_t>(rhs);
+	});
 }
 
 uint64_t visit_LLIL_CMP_UGE(Emulator* emu, const LowLevelILInstruction* instr)
 {
-	emu->log->LogError("LLIL_CMP_UGE @ 0x%08lx is unimplemented", instr->address);
-	return -1;
+	return BinaryVisitorHelper(emu, instr, [](const auto lhs, const auto rhs) {
+		return lhs >= rhs;
+	});
 }
 
 uint64_t visit_LLIL_CMP_SGT(Emulator* emu, const LowLevelILInstruction* instr)
 {
-	emu->log->LogError("LLIL_CMP_SGT @ 0x%08lx is unimplemented", instr->address);
-	return -1;
+	return BinaryVisitorHelper(emu, instr, [](const auto lhs, const auto rhs) {
+		return static_cast<int64_t>(lhs) > static_cast<int64_t>(rhs);
+	});
 }
 
 uint64_t visit_LLIL_CMP_UGT(Emulator* emu, const LowLevelILInstruction* instr)
 {
-	emu->log->LogError("LLIL_CMP_UGT @ 0x%08lx is unimplemented", instr->address);
-	return -1;
+	return BinaryVisitorHelper(emu, instr, [](const auto lhs, const auto rhs) {
+		return lhs > rhs;
+	});
 }
 
 uint64_t visit_LLIL_TEST_BIT(Emulator* emu, const LowLevelILInstruction* instr)

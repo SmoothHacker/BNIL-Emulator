@@ -27,14 +27,14 @@ void Emulator::dumpRegisters()
 
 uint64_t Emulator::readRegister(const uint32_t reg)
 {
-	return static_cast<uint64_t>(this->regs[reg]);
+	return this->regs[reg];
 }
 
 Emulator::Emulator(BinaryView* bv)
 {
 	this->log = LogRegistry::GetLogger(plugin_name);
-
 	this->log->LogDebug("Emulator Memory Map: ");
+
 	for (const Ref<Segment>& segment : bv->GetSegments()) {
 		this->memory.push_back({ new uint8_t[segment->GetLength()](), segment->GetStart(), segment->GetEnd() });
 		this->log->LogDebug("0x%08llx <-> 0x%08llx", segment->GetStart(), segment->GetEnd());
@@ -80,8 +80,8 @@ void Emulator::emulate_llil(const Ref<LowLevelILFunction>& llil_func)
 		// Fetch IL instruction
 		const auto& sf = this->callstack.top();
 		LowLevelILInstruction const instr = (*sf.llilFunction)[sf.curInstrIdx];
-
 		auto sym = this->bv->GetSymbolByAddress(sf.llilFunction->GetCurrentAddress());
+
 		log->LogDebug("Emulating Instr @ idx [%d] addr: 0x%08llx", sf.curInstrIdx, instr.address);
 		// Start visitor
 		this->visit(&instr);
@@ -90,7 +90,6 @@ void Emulator::emulate_llil(const Ref<LowLevelILFunction>& llil_func)
 			break;
 
 		this->callstack.top().curInstrIdx += 1;
-
 	} while (this->callstack.top().curInstrIdx < this->callstack.top().llilFunction->GetInstructionCount());
 }
 
@@ -170,7 +169,7 @@ void Emulator::call_function(const uint64_t func_addr, const uint64_t retInstrId
 	// Get Stack Pointer Value
 	const auto sp_reg = this->getBinaryView()->GetDefaultArchitecture()->GetStackPointerRegister();
 	this->getRegister(sp_reg);
-	this->callstack.emplace(stackFrame { .stack = new uint8_t[total_size](), .llilFunction = llil_func, .sf_base = static_cast<uint64_t>(this->getRegister(sp_reg)), .curInstrIdx = retInstrIdx });
+	this->callstack.emplace(stackFrame { .stack = new uint8_t[total_size](), .llilFunction = llil_func, .sf_base = (this->getRegister(sp_reg)), .curInstrIdx = retInstrIdx });
 }
 
 void Emulator::return_from_function()
@@ -222,7 +221,7 @@ uint64_t Emulator::visit(const LowLevelILInstruction* instr)
 		case LLIL_RET: ret = visit_LLIL_RET(this, instr); break;
 		case LLIL_NORET: ret = visit_LLIL_NORET(this, instr); break;
 		case LLIL_IF: ret = visit_LLIL_IF(this, instr); break;
-		case LLIL_GOTO: ret = visit_LLIL_GOTO(this, instr); break;
+		case LLIL_GOTO: ret = visit_LLIL_GOTO(instr); break;
 		case LLIL_CMP_E: ret = visit_LLIL_CMP_E(this, instr); break;
 		case LLIL_CMP_NE: ret = visit_LLIL_CMP_NE(this, instr); break;
 		case LLIL_CMP_SLT: ret = visit_LLIL_CMP_SLT(this, instr); break;
