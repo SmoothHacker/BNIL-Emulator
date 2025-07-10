@@ -11,6 +11,9 @@ target_compile_features(bnil_emulator PRIVATE cxx_std_23)
 target_compile_features(libemulator PRIVATE cxx_std_23)
 target_link_libraries(bnil_emulator libemulator)
 
+set(CMAKE_CXX_FLAGS_RELEASE "-flto -march=native -O3")
+set(CMAKE_CXX_FLAGS_DEBUG "-ggdb -fno-omit-frame-pointer -Og")
+
 # Add vendored API dependency if enabled
 option(BN_VENDOR_API "Use the Binary Ninja API submodule" ON)
 if(BN_VENDOR_API)

@@ -43,6 +43,6 @@ int main(const int argc, char* argv[])
 	}
 
 	emu_state->emulate_llil(llil_func);
-	emu_state->dumpRegisters();
+	emu_state->dump_registers();
 	return 0;
 }

@@ -14,7 +14,7 @@ uint64_t visit_LLIL_SET_REG(Emulator* emu, const LowLevelILInstruction* instr)
 	const auto reg = instr->GetDestRegister<LLIL_SET_REG>();
 	const auto src = instr->GetSourceExpr<LLIL_SET_REG>();
 	const auto value = emu->visit(&src);
-	emu->setRegister(reg, value);
+	emu->set_register(reg, value);
 	return -1;
 }
 
@@ -34,7 +34,7 @@ uint64_t visit_LLIL_LOAD(Emulator* emu, const LowLevelILInstruction* instr)
 {
 	const auto src = instr->GetSourceExpr<LLIL_LOAD>();
 	const auto address = emu->visit(&src);
-	return emu->readMemory(address, instr->size);
+	return emu->read_memory(address, instr->size);
 }
 
 uint64_t visit_LLIL_STORE(Emulator* emu, const LowLevelILInstruction* instr)
@@ -43,20 +43,20 @@ uint64_t visit_LLIL_STORE(Emulator* emu, const LowLevelILInstruction* instr)
 	const auto dest = instr->GetDestExpr<LLIL_STORE>();
 	const auto value = emu->visit(&src);
 	const auto address = emu->visit(&dest);
-	emu->writeMemory(address, value, instr->size);
+	emu->write_memory(address, value, instr->size);
 	return -1;
 }
 
 uint64_t visit_LLIL_PUSH(Emulator* emu, const LowLevelILInstruction* instr)
 {
-	const stackFrame* sf = emu->getTopCallstack();
+	const stackFrame* sf = emu->peek_callstack();
 	const auto srcExpr = instr->GetSourceExpr<LLIL_PUSH>();
 	const auto pushVal = emu->visit(&srcExpr);
 
 	// get stack pointer
-	const auto arch = emu->getBinaryView()->GetDefaultArchitecture();
+	const auto arch = emu->get_binary_view()->GetDefaultArchitecture();
 	const auto sp_idx = arch->GetStackPointerRegister();
-	const auto sp = emu->getRegister(sp_idx);
+	const auto sp = emu->get_register(sp_idx);
 	switch (srcExpr.size) {
 		case 1:
 			*(sf->stack + (static_cast<uint64_t>(sp) - sf->sf_base)) = static_cast<uint8_t>(pushVal);
@@ -74,17 +74,17 @@ uint64_t visit_LLIL_PUSH(Emulator* emu, const LowLevelILInstruction* instr)
 			break;
 	}
 	// Adjust SP
-	const auto sp_val = emu->getRegister(sp_idx);
-	emu->setRegister(sp_idx, sp_val - srcExpr.size);
+	const auto sp_val = emu->get_register(sp_idx);
+	emu->set_register(sp_idx, sp_val - srcExpr.size);
 	return 0;
 }
 
 uint64_t visit_LLIL_POP(Emulator* emu, const LowLevelILInstruction* instr)
 {
-	const stackFrame* sf = emu->getTopCallstack();
+	const stackFrame* sf = emu->peek_callstack();
 
 	// get stack pointer
-	const auto arch = emu->getBinaryView()->GetDefaultArchitecture();
+	const auto arch = emu->get_binary_view()->GetDefaultArchitecture();
 	const auto sp_idx = arch->GetStackPointerRegister();
 
 	uint64_t ret_val = 0;
@@ -113,15 +113,15 @@ uint64_t visit_LLIL_POP(Emulator* emu, const LowLevelILInstruction* instr)
 			break;
 	}
 	// Adjust SP
-	const auto sp_val = emu->getRegister(sp_idx);
-	emu->setRegister(sp_idx, sp_val + instr->size);
+	const auto sp_val = emu->get_register(sp_idx);
+	emu->set_register(sp_idx, sp_val + instr->size);
 	return ret_val;
 }
 
 uint64_t visit_LLIL_REG(Emulator* emu, const LowLevelILInstruction* instr)
 {
 	const auto regIdx = instr->GetSourceRegister<LLIL_REG>();
-	return emu->getRegister(regIdx);
+	return emu->get_register(regIdx);
 }
 
 uint64_t visit_LLIL_REG_SPLIT(Emulator* emu, const LowLevelILInstruction* instr)
@@ -267,9 +267,15 @@ uint64_t visit_LLIL_LOW_PART(Emulator* emu, const LowLevelILInstruction* instr)
 	return -1;
 }
 
+/*
+ * Both instructions perform jump operations. Only JUMP_TO has defined destinations
+ */
 uint64_t visit_LLIL_JUMP(Emulator* emu, const LowLevelILInstruction* instr)
 {
-	emu->log->LogError("LLIL_JUMP @ 0x%08lx is unimplemented", instr->address);
+	const auto dest_instr = instr->GetDestExpr<LLIL_JUMP>();
+	auto jump_target = emu->visit(&dest_instr);
+
+	// Check if jump_target is in new function
 	return -1;
 }
 
@@ -281,7 +287,9 @@ uint64_t visit_LLIL_JUMP_TO(Emulator* emu, const LowLevelILInstruction* instr)
 
 uint64_t visit_LLIL_CALL(Emulator* emu, const LowLevelILInstruction* instr)
 {
-	emu->log->LogError("LLIL_CALL @ 0x%08lx is unimplemented", instr->address);
+	const auto dest_instr = instr->GetDestExpr<LLIL_JUMP>();
+	const auto jump_target = emu->visit(&dest_instr);
+	emu->call_function(jump_target, instr->exprIndex + 1);
 	return -1;
 }
 
@@ -291,7 +299,7 @@ uint64_t visit_LLIL_TAILCALL(Emulator* emu, const LowLevelILInstruction* instr)
 	return -1;
 }
 
-uint64_t visit_LLIL_RET(Emulator* emu, const LowLevelILInstruction* instr)
+uint64_t visit_LLIL_RET(Emulator* emu)
 {
 	emu->return_from_function();
 	return 0;
@@ -314,6 +322,8 @@ uint64_t visit_LLIL_IF(Emulator* emu, const LowLevelILInstruction* instr)
 uint64_t visit_LLIL_GOTO(const LowLevelILInstruction* instr)
 {
 	const auto jump_target = instr->GetTarget<LLIL_GOTO>();
+
+	// check if jump target is in the current function
 	return jump_target;
 }
 
@@ -395,8 +405,9 @@ uint64_t visit_LLIL_TEST_BIT(Emulator* emu, const LowLevelILInstruction* instr)
 
 uint64_t visit_LLIL_INTRINSIC(Emulator* emu, const LowLevelILInstruction* instr)
 {
-	emu->log->LogError("LLIL_INTRINSIC @ 0x%08lx is unimplemented", instr->address);
-	return -1;
+	const auto handler = emu->get_intrinsic_handler(instr->GetIntrinsic<LLIL_INTRINSIC>());
+	handler(emu, instr);
+	return 0;
 }
 
 uint64_t visit_LLIL_UNDEF(Emulator* emu, const LowLevelILInstruction* instr)

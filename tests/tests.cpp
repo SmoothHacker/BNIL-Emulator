@@ -65,8 +65,8 @@ Emulator* CreateEmuInstance(const std::string& input, Ref<LowLevelILFunction>& l
 	}
 	llil_func = il;
 	const auto emu = new Emulator(bv);
-	const auto sp_reg_idx = emu->getBinaryView()->GetDefaultArchitecture()->GetStackPointerRegister();
-	emu->setRegister(sp_reg_idx, 0x2000);
+	const auto sp_reg_idx = emu->get_binary_view()->GetDefaultArchitecture()->GetStackPointerRegister();
+	emu->set_register(sp_reg_idx, 0x2000);
 	return emu;
 }
 
@@ -115,7 +115,7 @@ uc_engine* CreateUnicornInstance(const std::string& input)
 
 void CheckResults(Emulator* emu, uc_engine* uc)
 {
-	const auto bv = emu->getBinaryView();
+	const auto bv = emu->get_binary_view();
 	const auto arch = bv->GetDefaultArchitecture();
 	auto regs = arch->GetFullWidthRegisters();
 	const auto log = LogRegistry::GetLogger(plugin_name);
@@ -123,7 +123,7 @@ void CheckResults(Emulator* emu, uc_engine* uc)
 	uint64_t regValue = 0;
 	for (auto& [regName, ucRegIdx] : registers) {
 		const auto regId = arch->GetRegisterByName(regName);
-		const auto emuVal = emu->getRegister(regId);
+		const auto emuVal = emu->get_register(regId);
 		uc_reg_read(uc, ucRegIdx, &regValue);
 		log->LogDebug("Checking Register: %s", regName.c_str());
 		CHECK(emuVal == regValue);

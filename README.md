@@ -1,6 +1,6 @@
 # BNIL-Emulator
 
-This is an emulator for Binary Ninja's Low Level Intermediate Language (MLIL). 
+This is an emulator for Binary Ninja's Low Level Intermediate Language (LLIL).
 
 ## Notice
 The project currently requires a Commercial license due to the fact that it

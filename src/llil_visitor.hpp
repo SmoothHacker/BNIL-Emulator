@@ -35,7 +35,7 @@ uint64_t visit_LLIL_JUMP(Emulator* emu, const LowLevelILInstruction* instr);
 uint64_t visit_LLIL_JUMP_TO(Emulator* emu, const LowLevelILInstruction* instr);
 uint64_t visit_LLIL_CALL(Emulator* emu, const LowLevelILInstruction* instr);
 uint64_t visit_LLIL_TAILCALL(Emulator* emu, const LowLevelILInstruction* instr);
-uint64_t visit_LLIL_RET(Emulator* emu, const LowLevelILInstruction* instr);
+uint64_t visit_LLIL_RET(Emulator* emu);
 uint64_t visit_LLIL_NORET(Emulator* emu, const LowLevelILInstruction* instr);
 uint64_t visit_LLIL_IF(Emulator* emu, const LowLevelILInstruction* instr);
 uint64_t visit_LLIL_GOTO(const LowLevelILInstruction* instr);

@@ -1,22 +1,22 @@
 #include "emulator.hpp"
 #include "llil_visitor.hpp"
 
-void Emulator::setRegister(const uint32_t reg, const uint64_t value)
+void Emulator::set_register(const uint32_t reg, const uint64_t value)
 {
 	this->regs[reg] = value;
 }
 
-uint64_t Emulator::getRegister(const uint32_t reg)
+uint64_t Emulator::get_register(const uint32_t reg)
 {
 	return this->regs[reg];
 }
 
-Ref<BinaryView> Emulator::getBinaryView()
+Ref<BinaryView> Emulator::get_binary_view()
 {
 	return this->bv;
 }
 
-void Emulator::dumpRegisters()
+void Emulator::dump_registers()
 {
 	const auto arch = this->bv->GetDefaultArchitecture();
 	this->log->LogInfo("Dumping registers:");
@@ -25,7 +25,7 @@ void Emulator::dumpRegisters()
 	}
 }
 
-uint64_t Emulator::readRegister(const uint32_t reg)
+uint64_t Emulator::read_register(const uint32_t reg)
 {
 	return this->regs[reg];
 }
@@ -42,7 +42,7 @@ Emulator::Emulator(BinaryView* bv)
 	this->bv = bv;
 }
 
-void Emulator::printCallstack()
+void Emulator::print_callstack()
 {
 	const auto log = this->log;
 	log->LogDebug("Emulator Callstack Dump\n");
@@ -93,7 +93,17 @@ void Emulator::emulate_llil(const Ref<LowLevelILFunction>& llil_func)
 	} while (this->callstack.top().curInstrIdx < this->callstack.top().llilFunction->GetInstructionCount());
 }
 
-bool Emulator::isFunctionThunk(const uint64_t address) const
+void Emulator::register_intrinsic_handler(const uint32_t intrinsic_idx, const std::function<void(Emulator* emu, const LowLevelILInstruction*)>& handler)
+{
+	this->intrinsic_handlers[intrinsic_idx] = handler;
+}
+
+std::function<void(Emulator* emu, const LowLevelILInstruction*)> Emulator::get_intrinsic_handler(const uint32_t intrinsic_idx)
+{
+	return this->intrinsic_handlers[intrinsic_idx];
+}
+
+bool Emulator::is_function_thunk(const uint64_t address) const
 {
 	// Check if the address belongs to a section in the bv that had read-only permissions
 	for (const auto sections = this->bv->GetSectionsAt(address); const auto& section : sections) {
@@ -103,7 +113,7 @@ bool Emulator::isFunctionThunk(const uint64_t address) const
 	return true;
 }
 
-uint64_t Emulator::readMemory(const uint64_t address, const uint8_t size) const
+uint64_t Emulator::read_memory(const uint64_t address, const uint8_t size) const
 {
 	const mem_segment* seg = nullptr;
 	for (const auto& segment : this->memory) {
@@ -129,7 +139,7 @@ uint64_t Emulator::readMemory(const uint64_t address, const uint8_t size) const
 	return *reinterpret_cast<uint64_t*>(seg->mem + (address - seg->startAddr));
 }
 
-void Emulator::writeMemory(const uint64_t address, const uint64_t value, const uint8_t size) const
+void Emulator::write_memory(const uint64_t address, const uint64_t value, const uint8_t size) const
 {
 	const mem_segment* seg = nullptr;
 	for (const auto& segment : this->memory) {
@@ -155,9 +165,19 @@ void Emulator::writeMemory(const uint64_t address, const uint64_t value, const u
 	}
 }
 
+void Emulator::reset_emulator()
+{
+	const auto arch = this->get_binary_view()->GetDefaultArchitecture();
+
+	for (const auto reg: arch->GetAllRegisters())
+		this->set_register(reg, 0);
+
+
+}
+
 void Emulator::call_function(const uint64_t func_addr, const uint64_t retInstrIdx)
 {
-	const auto func = this->getBinaryView()->GetAnalysisFunction(this->bv->GetDefaultPlatform(), func_addr);
+	const auto func = this->get_binary_view()->GetAnalysisFunction(this->bv->GetDefaultPlatform(), func_addr);
 	const auto llil_func = func->GetLowLevelIL();
 
 	// Get Stack Size
@@ -167,9 +187,9 @@ void Emulator::call_function(const uint64_t func_addr, const uint64_t retInstrId
 	const auto total_size = stack_var_offset + highest_variable.type->GetWidth();
 
 	// Get Stack Pointer Value
-	const auto sp_reg = this->getBinaryView()->GetDefaultArchitecture()->GetStackPointerRegister();
-	this->getRegister(sp_reg);
-	this->callstack.emplace(stackFrame { .stack = new uint8_t[total_size](), .llilFunction = llil_func, .sf_base = (this->getRegister(sp_reg)), .curInstrIdx = retInstrIdx });
+	const auto sp_reg = this->get_binary_view()->GetDefaultArchitecture()->GetStackPointerRegister();
+	this->get_register(sp_reg);
+	this->callstack.emplace(stackFrame { .stack = new uint8_t[total_size](), .llilFunction = llil_func, .sf_base = (this->get_register(sp_reg)), .curInstrIdx = retInstrIdx });
 }
 
 void Emulator::return_from_function()
@@ -218,7 +238,7 @@ uint64_t Emulator::visit(const LowLevelILInstruction* instr)
 		case LLIL_JUMP_TO: ret = visit_LLIL_JUMP_TO(this, instr); break;
 		case LLIL_CALL: ret = visit_LLIL_CALL(this, instr); break;
 		case LLIL_TAILCALL: ret = visit_LLIL_TAILCALL(this, instr); break;
-		case LLIL_RET: ret = visit_LLIL_RET(this, instr); break;
+		case LLIL_RET: ret = visit_LLIL_RET(this); break;
 		case LLIL_NORET: ret = visit_LLIL_NORET(this, instr); break;
 		case LLIL_IF: ret = visit_LLIL_IF(this, instr); break;
 		case LLIL_GOTO: ret = visit_LLIL_GOTO(instr); break;
