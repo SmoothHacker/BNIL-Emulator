@@ -31,7 +31,7 @@ class Emulator {
 	Ref<BinaryView> bv;
 	std::stack<stackFrame> callstack;
 	std::unordered_map<uint32_t, uint64_t> regs;
-	std::unordered_map<uint32_t, std::function<void(Emulator *emu, const LowLevelILInstruction*)>> intrinsic_handlers;
+	std::unordered_map<uint32_t, std::function<void(Emulator* emu, const LowLevelILInstruction*)>> intrinsic_handlers;
 
 public:
 	Ref<Logger> log;
@@ -57,5 +57,5 @@ public:
 
 	// This will override existing handlers
 	void register_intrinsic_handler(uint32_t intrinsic_idx, const std::function<void(Emulator* emu, const LowLevelILInstruction*)>& handler);
-	std::function<void(Emulator* emu, const LowLevelILInstruction*)> *get_intrinsic_handler(uint32_t intrinsic_idx);
+	std::function<void(Emulator* emu, const LowLevelILInstruction*)> get_intrinsic_handler(uint32_t intrinsic_idx);
 };

@@ -94,9 +94,9 @@ void Emulator::register_intrinsic_handler(const uint32_t intrinsic_idx, const st
 	this->intrinsic_handlers[intrinsic_idx] = handler;
 }
 
-std::function<void(Emulator* emu, const LowLevelILInstruction*)> *Emulator::get_intrinsic_handler(const uint32_t intrinsic_idx)
+std::function<void(Emulator* emu, const LowLevelILInstruction*)> Emulator::get_intrinsic_handler(const uint32_t intrinsic_idx)
 {
-	return &this->intrinsic_handlers[intrinsic_idx];
+	return this->intrinsic_handlers[intrinsic_idx];
 }
 
 bool Emulator::is_function_thunk(const uint64_t address) const
@@ -248,64 +248,65 @@ uint64_t Emulator::visit(const LowLevelILInstruction* instr)
 		case LLIL_TEST_BIT: ret = visit_LLIL_TEST_BIT(this, instr); break;
 		case LLIL_INTRINSIC: ret = visit_LLIL_INTRINSIC(this, instr); break;
 		case LLIL_UNDEF: ret = visit_LLIL_UNDEF(this, instr); break;
-		case LLIL_SET_REG_STACK_REL: break;
-		case LLIL_REG_STACK_PUSH: break;
-		case LLIL_ASSERT: break;
-		case LLIL_FORCE_VER: break;
-		case LLIL_REG_STACK_REL: break;
-		case LLIL_REG_STACK_POP: break;
-		case LLIL_REG_STACK_FREE_REG: break;
-		case LLIL_REG_STACK_FREE_REL: break;
-		case LLIL_EXTERN_PTR: break;
-		case LLIL_FLOAT_CONST: break;
-		case LLIL_FLAG_BIT: break;
-		case LLIL_ADC: break;
-		case LLIL_ROL: break;
-		case LLIL_RLC: break;
-		case LLIL_ROR: break;
-		case LLIL_RRC: break;
-		case LLIL_MULU_DP: break;
-		case LLIL_MULS_DP: break;
-		case LLIL_DIVU: break;
-		case LLIL_DIVS: break;
-		case LLIL_MODU: break;
-		case LLIL_MODS: break;
-		case LLIL_NOT: break;
-		case LLIL_CALL_STACK_ADJUST: break;
-		case LLIL_FLAG_COND: break;
-		case LLIL_FLAG_GROUP: break;
-		case LLIL_BOOL_TO_INT: break;
-		case LLIL_ADD_OVERFLOW: break;
-		case LLIL_SYSCALL: break;
-		case LLIL_BP: break;
-		case LLIL_TRAP: break;
-		case LLIL_UNIMPL: break;
-		case LLIL_UNIMPL_MEM: break;
-		case LLIL_FADD: break;
-		case LLIL_FSUB: break;
-		case LLIL_FMUL: break;
-		case LLIL_FDIV: break;
-		case LLIL_FSQRT: break;
-		case LLIL_FNEG: break;
-		case LLIL_FABS: break;
-		case LLIL_FLOAT_TO_INT: break;
-		case LLIL_INT_TO_FLOAT: break;
-		case LLIL_FLOAT_CONV: break;
-		case LLIL_ROUND_TO_INT: break;
-		case LLIL_FLOOR: break;
-		case LLIL_CEIL: break;
-		case LLIL_FTRUNC: break;
-		case LLIL_FCMP_E: break;
-		case LLIL_FCMP_NE: break;
-		case LLIL_FCMP_LT: break;
-		case LLIL_FCMP_LE: break;
-		case LLIL_FCMP_GE: break;
-		case LLIL_FCMP_GT: break;
-		case LLIL_FCMP_O: break;
-		case LLIL_FCMP_UO: break;
-		case LLIL_SET_REG_SSA_PARTIAL: break;
-		case LLIL_CALL_PARAM: break;
-		default:;
+		case LLIL_SET_REG_STACK_REL: ret = visit_LLIL_SET_REG_STACK_REL(this, instr); break;
+		case LLIL_REG_STACK_PUSH: ret = visit_LLIL_REG_STACK_PUSH(this, instr); break;
+		case LLIL_ASSERT: ret = visit_LLIL_ASSERT(this, instr); break;
+		case LLIL_FORCE_VER: ret = visit_LLIL_FORCE_VER(this, instr); break;
+		case LLIL_REG_STACK_REL: ret = visit_LLIL_REG_STACK_REL(this, instr); break;
+		case LLIL_REG_STACK_POP: ret = visit_LLIL_REG_STACK_POP(this, instr); break;
+		case LLIL_REG_STACK_FREE_REG: ret = visit_LLIL_REG_STACK_FREE_REG(this, instr); break;
+		case LLIL_REG_STACK_FREE_REL: ret = visit_LLIL_REG_STACK_FREE_REL(this, instr); break;
+		case LLIL_EXTERN_PTR: ret = visit_LLIL_EXTERN_PTR(this, instr); break;
+		case LLIL_FLOAT_CONST: ret = visit_LLIL_FLOAT_CONST(this, instr); break;
+		case LLIL_FLAG_BIT: ret = visit_LLIL_FLAG_BIT(this, instr); break;
+		case LLIL_ADC: ret = visit_LLIL_ADC(this, instr); break;
+		case LLIL_ROL: ret = visit_LLIL_ROL(this, instr); break;
+		case LLIL_RLC: ret = visit_LLIL_RLC(this, instr); break;
+		case LLIL_ROR: ret = visit_LLIL_ROR(this, instr); break;
+		case LLIL_RRC: ret = visit_LLIL_RRC(this, instr); break;
+		case LLIL_MULU_DP: ret = visit_LLIL_MULU_DP(this, instr); break;
+		case LLIL_MULS_DP: ret = visit_LLIL_MULS_DP(this, instr); break;
+		case LLIL_DIVU: ret = visit_LLIL_DIVU(this, instr); break;
+		case LLIL_DIVS: ret = visit_LLIL_DIVS(this, instr); break;
+		case LLIL_MODU: ret = visit_LLIL_MODU(this, instr); break;
+		case LLIL_MODS: ret = visit_LLIL_MODS(this, instr); break;
+		case LLIL_NOT: ret = visit_LLIL_NOT(this, instr); break;
+		case LLIL_CALL_STACK_ADJUST: ret = visit_LLIL_CALL_STACK_ADJUST(this, instr); break;
+		case LLIL_FLAG_COND: ret = visit_LLIL_FLAG_COND(this, instr); break;
+		case LLIL_FLAG_GROUP: ret = visit_LLIL_FLAG_GROUP(this, instr); break;
+		case LLIL_BOOL_TO_INT: ret = visit_LLIL_BOOL_TO_INT(this, instr); break;
+		case LLIL_ADD_OVERFLOW: ret = visit_LLIL_ADD_OVERFLOW(this, instr); break;
+		case LLIL_SYSCALL: ret = visit_LLIL_SYSCALL(this, instr); break;
+		case LLIL_BP: ret = visit_LLIL_BP(this, instr); break;
+		case LLIL_TRAP: ret = visit_LLIL_TRAP(this, instr); break;
+		case LLIL_UNIMPL: ret = visit_LLIL_UNIMPL(this, instr); break;
+		case LLIL_UNIMPL_MEM: ret = visit_LLIL_UNIMPL_MEM(this, instr); break;
+		case LLIL_FADD: ret = visit_LLIL_FADD(this, instr); break;
+		case LLIL_FSUB: ret = visit_LLIL_FSUB(this, instr); break;
+		case LLIL_FMUL: ret = visit_LLIL_FMUL(this, instr); break;
+		case LLIL_FDIV: ret = visit_LLIL_FDIV(this, instr); break;
+		case LLIL_FSQRT: ret = visit_LLIL_FSQRT(this, instr); break;
+		case LLIL_FNEG: ret = visit_LLIL_FNEG(this, instr); break;
+		case LLIL_FABS: ret = visit_LLIL_FABS(this, instr); break;
+		case LLIL_FLOAT_TO_INT: ret = visit_LLIL_FLOAT_TO_INT(this, instr); break;
+		case LLIL_INT_TO_FLOAT: ret = visit_LLIL_INT_TO_FLOAT(this, instr); break;
+		case LLIL_FLOAT_CONV: ret = visit_LLIL_FLOAT_CONV(this, instr); break;
+		case LLIL_ROUND_TO_INT: ret = visit_LLIL_ROUND_TO_INT(this, instr); break;
+		case LLIL_FLOOR: ret = visit_LLIL_FLOOR(this, instr); break;
+		case LLIL_CEIL: ret = visit_LLIL_CEIL(this, instr); break;
+		case LLIL_FTRUNC: ret = visit_LLIL_FTRUNC(this, instr); break;
+		case LLIL_FCMP_E: ret = visit_LLIL_FCMP_E(this, instr); break;
+		case LLIL_FCMP_NE: ret = visit_LLIL_FCMP_NE(this, instr); break;
+		case LLIL_FCMP_LT: ret = visit_LLIL_FCMP_LT(this, instr); break;
+		case LLIL_FCMP_LE: ret = visit_LLIL_FCMP_LE(this, instr); break;
+		case LLIL_FCMP_GE: ret = visit_LLIL_FCMP_GE(this, instr); break;
+		case LLIL_FCMP_GT: ret = visit_LLIL_FCMP_GT(this, instr); break;
+		case LLIL_FCMP_O: ret = visit_LLIL_FCMP_O(this, instr); break;
+		case LLIL_FCMP_UO: ret = visit_LLIL_FCMP_UO(this, instr); break;
+		case LLIL_CALL_PARAM: ret = visit_LLIL_CALL_PARAM(this, instr); break;
+		default:
+			log->LogError("Unhandled LLIL instruction [%d]", instr->operation);
+			break;
 	}
 	return ret;
 }

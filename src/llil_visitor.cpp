@@ -417,3 +417,343 @@ uint64_t visit_LLIL_UNDEF(const Emulator* emu, const LowLevelILInstruction* inst
 	emu->log->LogError("LLIL_UNDEF Encountered. Unknown emulation side effects. Treating instruction as a NOP", instr->address);
 	return 0;
 }
+
+uint64_t visit_LLIL_SET_REG_STACK_REL(Emulator* emu, const LowLevelILInstruction* instr)
+{
+	emu->log->LogError("LLIL_SET_REG_STACK_REL @ 0x%08lx is unimplemented", instr->address);
+	return -1;
+}
+
+uint64_t visit_LLIL_REG_STACK_PUSH(Emulator* emu, const LowLevelILInstruction* instr)
+{
+	emu->log->LogError("LLIL_REG_STACK_PUSH @ 0x%08lx is unimplemented", instr->address);
+	return -1;
+}
+
+uint64_t visit_LLIL_ASSERT(Emulator* emu, const LowLevelILInstruction* instr)
+{
+	const auto src_expr = instr->GetSourceExpr<LLIL_ASSERT>();
+	auto constraint = instr->GetConstraint<LLIL_ASSERT>();
+	const auto src_value = emu->visit(&src_expr);
+	// TODO: figure out how to evaluate PVS
+	return -1;
+}
+
+uint64_t visit_LLIL_FORCE_VER(Emulator* emu, const LowLevelILInstruction* instr)
+{
+	emu->log->LogError("LLIL_FORCE_VER @ 0x%08lx is unimplemented", instr->address);
+	return -1;
+}
+
+uint64_t visit_LLIL_REG_STACK_REL(Emulator* emu, const LowLevelILInstruction* instr)
+{
+	emu->log->LogError("LLIL_REG_STACK_REL @ 0x%08lx is unimplemented", instr->address);
+	return -1;
+}
+
+uint64_t visit_LLIL_REG_STACK_POP(Emulator* emu, const LowLevelILInstruction* instr)
+{
+	emu->log->LogError("LLIL_REG_STACK_POP @ 0x%08lx is unimplemented", instr->address);
+	return -1;
+}
+
+uint64_t visit_LLIL_REG_STACK_FREE_REG(Emulator* emu, const LowLevelILInstruction* instr)
+{
+	emu->log->LogError("LLIL_REG_STACK_FREE_REG @ 0x%08lx is unimplemented", instr->address);
+	return -1;
+}
+
+uint64_t visit_LLIL_REG_STACK_FREE_REL(Emulator* emu, const LowLevelILInstruction* instr)
+{
+	emu->log->LogError("LLIL_REG_STACK_FREE_REL @ 0x%08lx is unimplemented", instr->address);
+	return -1;
+}
+
+uint64_t visit_LLIL_EXTERN_PTR(Emulator* emu, const LowLevelILInstruction* instr)
+{
+	emu->log->LogError("LLIL_EXTERN_PTR @ 0x%08lx is unimplemented", instr->address);
+	return -1;
+}
+
+uint64_t visit_LLIL_FLOAT_CONST(Emulator* emu, const LowLevelILInstruction* instr)
+{
+	emu->log->LogError("LLIL_FLOAT_CONST @ 0x%08lx is unimplemented", instr->address);
+	return -1;
+}
+
+uint64_t visit_LLIL_FLAG_BIT(Emulator* emu, const LowLevelILInstruction* instr)
+{
+	emu->log->LogError("LLIL_FLAG_BIT @ 0x%08lx is unimplemented", instr->address);
+	return -1;
+}
+
+uint64_t visit_LLIL_ADC(Emulator* emu, const LowLevelILInstruction* instr)
+{
+	emu->log->LogError("LLIL_ADC @ 0x%08lx is unimplemented", instr->address);
+	return -1;
+}
+
+uint64_t visit_LLIL_ROL(Emulator* emu, const LowLevelILInstruction* instr)
+{
+	emu->log->LogError("LLIL_ROL @ 0x%08lx is unimplemented", instr->address);
+	return -1;
+}
+
+uint64_t visit_LLIL_RLC(Emulator* emu, const LowLevelILInstruction* instr)
+{
+	emu->log->LogError("LLIL_RLC @ 0x%08lx is unimplemented", instr->address);
+	return -1;
+}
+
+uint64_t visit_LLIL_ROR(Emulator* emu, const LowLevelILInstruction* instr)
+{
+	emu->log->LogError("LLIL_ROR @ 0x%08lx is unimplemented", instr->address);
+	return -1;
+}
+
+uint64_t visit_LLIL_RRC(Emulator* emu, const LowLevelILInstruction* instr)
+{
+	emu->log->LogError("LLIL_RRC @ 0x%08lx is unimplemented", instr->address);
+	return -1;
+}
+
+uint64_t visit_LLIL_MULU_DP(Emulator* emu, const LowLevelILInstruction* instr)
+{
+	emu->log->LogError("LLIL_MULU_DP @ 0x%08lx is unimplemented", instr->address);
+	return -1;
+}
+
+uint64_t visit_LLIL_MULS_DP(Emulator* emu, const LowLevelILInstruction* instr)
+{
+	emu->log->LogError("LLIL_MULS_DP @ 0x%08lx is unimplemented", instr->address);
+	return -1;
+}
+
+uint64_t visit_LLIL_DIVU(Emulator* emu, const LowLevelILInstruction* instr)
+{
+	emu->log->LogError("LLIL_DIVU @ 0x%08lx is unimplemented", instr->address);
+	return -1;
+}
+
+uint64_t visit_LLIL_DIVS(Emulator* emu, const LowLevelILInstruction* instr)
+{
+	emu->log->LogError("LLIL_DIVS @ 0x%08lx is unimplemented", instr->address);
+	return -1;
+}
+
+uint64_t visit_LLIL_MODU(Emulator* emu, const LowLevelILInstruction* instr)
+{
+	emu->log->LogError("LLIL_MODU @ 0x%08lx is unimplemented", instr->address);
+	return -1;
+}
+
+uint64_t visit_LLIL_MODS(Emulator* emu, const LowLevelILInstruction* instr)
+{
+	emu->log->LogError("LLIL_MODS @ 0x%08lx is unimplemented", instr->address);
+	return -1;
+}
+
+uint64_t visit_LLIL_NOT(Emulator* emu, const LowLevelILInstruction* instr)
+{
+	emu->log->LogError("LLIL_NOT @ 0x%08lx is unimplemented", instr->address);
+	return -1;
+}
+
+uint64_t visit_LLIL_CALL_STACK_ADJUST(Emulator* emu, const LowLevelILInstruction* instr)
+{
+	emu->log->LogError("LLIL_CALL_STACK_ADJUST @ 0x%08lx is unimplemented", instr->address);
+	return -1;
+}
+
+uint64_t visit_LLIL_FLAG_COND(Emulator* emu, const LowLevelILInstruction* instr)
+{
+	emu->log->LogError("LLIL_FLAG_COND @ 0x%08lx is unimplemented", instr->address);
+	return -1;
+}
+
+uint64_t visit_LLIL_FLAG_GROUP(Emulator* emu, const LowLevelILInstruction* instr)
+{
+	emu->log->LogError("LLIL_FLAG_GROUP @ 0x%08lx is unimplemented", instr->address);
+	return -1;
+}
+
+uint64_t visit_LLIL_BOOL_TO_INT(Emulator* emu, const LowLevelILInstruction* instr)
+{
+	emu->log->LogError("LLIL_BOOL_TO_INT @ 0x%08lx is unimplemented", instr->address);
+	return -1;
+}
+
+uint64_t visit_LLIL_ADD_OVERFLOW(Emulator* emu, const LowLevelILInstruction* instr)
+{
+	emu->log->LogError("LLIL_ADD_OVERFLOW @ 0x%08lx is unimplemented", instr->address);
+	return -1;
+}
+
+uint64_t visit_LLIL_SYSCALL(Emulator* emu, const LowLevelILInstruction* instr)
+{
+	emu->log->LogError("LLIL_SYSCALL @ 0x%08lx is unimplemented", instr->address);
+	return -1;
+}
+
+uint64_t visit_LLIL_BP(Emulator* emu, const LowLevelILInstruction* instr)
+{
+	// TODO: Create emu function to breakout
+	emu->log->LogError("LLIL_BP @ 0x%08lx is unimplemented", instr->address);
+	return -1;
+}
+
+uint64_t visit_LLIL_TRAP(Emulator* emu, const LowLevelILInstruction* instr)
+{
+	emu->log->LogError("LLIL_TRAP @ 0x%08lx is unimplemented", instr->address);
+	return -1;
+}
+
+uint64_t visit_LLIL_UNIMPL(Emulator* emu, const LowLevelILInstruction* instr)
+{
+	emu->log->LogError("LLIL_UNIMPL Encountered @ 0x%llx. Unknown emulation side effects. Treating instruction as a NOP", instr->address);
+	return -1;
+}
+
+uint64_t visit_LLIL_UNIMPL_MEM(Emulator* emu, const LowLevelILInstruction* instr)
+{
+	emu->log->LogError("LLIL_UNIMPL_MEM @ 0x%08lx is unimplemented", instr->address);
+	return -1;
+}
+
+uint64_t visit_LLIL_FADD(Emulator* emu, const LowLevelILInstruction* instr)
+{
+	emu->log->LogError("LLIL_FADD @ 0x%08lx is unimplemented", instr->address);
+	return -1;
+}
+
+uint64_t visit_LLIL_FSUB(Emulator* emu, const LowLevelILInstruction* instr)
+{
+	emu->log->LogError("LLIL_FSUB @ 0x%08lx is unimplemented", instr->address);
+	return -1;
+}
+
+uint64_t visit_LLIL_FMUL(Emulator* emu, const LowLevelILInstruction* instr)
+{
+	emu->log->LogError("LLIL_FMUL @ 0x%08lx is unimplemented", instr->address);
+	return -1;
+}
+
+uint64_t visit_LLIL_FDIV(Emulator* emu, const LowLevelILInstruction* instr)
+{
+	emu->log->LogError("LLIL_FDIV @ 0x%08lx is unimplemented", instr->address);
+	return -1;
+}
+
+uint64_t visit_LLIL_FSQRT(Emulator* emu, const LowLevelILInstruction* instr)
+{
+	emu->log->LogError("LLIL_FSQRT @ 0x%08lx is unimplemented", instr->address);
+	return -1;
+}
+
+uint64_t visit_LLIL_FNEG(Emulator* emu, const LowLevelILInstruction* instr)
+{
+	emu->log->LogError("LLIL_FNEG @ 0x%08lx is unimplemented", instr->address);
+	return -1;
+}
+
+uint64_t visit_LLIL_FABS(Emulator* emu, const LowLevelILInstruction* instr)
+{
+	emu->log->LogError("LLIL_FABS @ 0x%08lx is unimplemented", instr->address);
+	return -1;
+}
+
+uint64_t visit_LLIL_FLOAT_TO_INT(Emulator* emu, const LowLevelILInstruction* instr)
+{
+	emu->log->LogError("LLIL_FLOAT_TO_INT @ 0x%08lx is unimplemented", instr->address);
+	return -1;
+}
+
+uint64_t visit_LLIL_INT_TO_FLOAT(Emulator* emu, const LowLevelILInstruction* instr)
+{
+	emu->log->LogError("LLIL_INT_TO_FLOAT @ 0x%08lx is unimplemented", instr->address);
+	return -1;
+}
+
+uint64_t visit_LLIL_FLOAT_CONV(Emulator* emu, const LowLevelILInstruction* instr)
+{
+	emu->log->LogError("LLIL_FLOAT_CONV @ 0x%08lx is unimplemented", instr->address);
+	return -1;
+}
+
+uint64_t visit_LLIL_ROUND_TO_INT(Emulator* emu, const LowLevelILInstruction* instr)
+{
+	emu->log->LogError("LLIL_ROUND_TO_INT @ 0x%08lx is unimplemented", instr->address);
+	return -1;
+}
+
+uint64_t visit_LLIL_FLOOR(Emulator* emu, const LowLevelILInstruction* instr)
+{
+	emu->log->LogError("LLIL_FLOOR @ 0x%08lx is unimplemented", instr->address);
+	return -1;
+}
+
+uint64_t visit_LLIL_CEIL(Emulator* emu, const LowLevelILInstruction* instr)
+{
+	emu->log->LogError("LLIL_CEIL @ 0x%08lx is unimplemented", instr->address);
+	return -1;
+}
+
+uint64_t visit_LLIL_FTRUNC(Emulator* emu, const LowLevelILInstruction* instr)
+{
+	emu->log->LogError("LLIL_FTRUNC @ 0x%08lx is unimplemented", instr->address);
+	return -1;
+}
+
+uint64_t visit_LLIL_FCMP_E(Emulator* emu, const LowLevelILInstruction* instr)
+{
+	emu->log->LogError("LLIL_FCMP_E @ 0x%08lx is unimplemented", instr->address);
+	return -1;
+}
+
+uint64_t visit_LLIL_FCMP_NE(Emulator* emu, const LowLevelILInstruction* instr)
+{
+	emu->log->LogError("LLIL_FCMP_NE @ 0x%08lx is unimplemented", instr->address);
+	return -1;
+}
+
+uint64_t visit_LLIL_FCMP_LT(Emulator* emu, const LowLevelILInstruction* instr)
+{
+	emu->log->LogError("LLIL_FCMP_LT @ 0x%08lx is unimplemented", instr->address);
+	return -1;
+}
+
+uint64_t visit_LLIL_FCMP_LE(Emulator* emu, const LowLevelILInstruction* instr)
+{
+	emu->log->LogError("LLIL_FCMP_LE @ 0x%08lx is unimplemented", instr->address);
+	return -1;
+}
+
+uint64_t visit_LLIL_FCMP_GE(Emulator* emu, const LowLevelILInstruction* instr)
+{
+	emu->log->LogError("LLIL_FCMP_GE @ 0x%08lx is unimplemented", instr->address);
+	return -1;
+}
+
+uint64_t visit_LLIL_FCMP_GT(Emulator* emu, const LowLevelILInstruction* instr)
+{
+	emu->log->LogError("LLIL_FCMP_GT @ 0x%08lx is unimplemented", instr->address);
+	return -1;
+}
+
+uint64_t visit_LLIL_FCMP_O(Emulator* emu, const LowLevelILInstruction* instr)
+{
+	emu->log->LogError("LLIL_FCMP_O @ 0x%08lx is unimplemented", instr->address);
+	return -1;
+}
+
+uint64_t visit_LLIL_FCMP_UO(Emulator* emu, const LowLevelILInstruction* instr)
+{
+	emu->log->LogError("LLIL_FCMP_UO @ 0x%08lx is unimplemented", instr->address);
+	return -1;
+}
+
+uint64_t visit_LLIL_CALL_PARAM(Emulator* emu, const LowLevelILInstruction* instr)
+{
+	emu->log->LogError("LLIL_CALL_PARAM @ 0x%08lx is unimplemented", instr->address);
+	return -1;
+}

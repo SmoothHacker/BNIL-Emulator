@@ -52,120 +52,66 @@ uint64_t visit_LLIL_CMP_UGT(Emulator* emu, const LowLevelILInstruction* instr);
 uint64_t visit_LLIL_TEST_BIT(Emulator* emu, const LowLevelILInstruction* instr);
 uint64_t visit_LLIL_INTRINSIC(Emulator* emu, const LowLevelILInstruction* instr);
 uint64_t visit_LLIL_UNDEF(const Emulator* emu, const LowLevelILInstruction* instr);
+uint64_t visit_LLIL_SET_REG_STACK_REL(Emulator* emu, const LowLevelILInstruction* instr);
+uint64_t visit_LLIL_REG_STACK_PUSH(Emulator* emu, const LowLevelILInstruction* instr);
+uint64_t visit_LLIL_ASSERT(Emulator* emu, const LowLevelILInstruction* instr);
+uint64_t visit_LLIL_FORCE_VER(Emulator* emu, const LowLevelILInstruction* instr);
+uint64_t visit_LLIL_REG_STACK_REL(Emulator* emu, const LowLevelILInstruction* instr);
+uint64_t visit_LLIL_REG_STACK_POP(Emulator* emu, const LowLevelILInstruction* instr);
+uint64_t visit_LLIL_REG_STACK_FREE_REG(Emulator* emu, const LowLevelILInstruction* instr);
+uint64_t visit_LLIL_REG_STACK_FREE_REL(Emulator* emu, const LowLevelILInstruction* instr);
+uint64_t visit_LLIL_EXTERN_PTR(Emulator* emu, const LowLevelILInstruction* instr);
+uint64_t visit_LLIL_FLOAT_CONST(Emulator* emu, const LowLevelILInstruction* instr);
+uint64_t visit_LLIL_FLAG_BIT(Emulator* emu, const LowLevelILInstruction* instr);
+uint64_t visit_LLIL_ADC(Emulator* emu, const LowLevelILInstruction* instr);
+uint64_t visit_LLIL_ROL(Emulator* emu, const LowLevelILInstruction* instr);
+uint64_t visit_LLIL_RLC(Emulator* emu, const LowLevelILInstruction* instr);
+uint64_t visit_LLIL_ROR(Emulator* emu, const LowLevelILInstruction* instr);
+uint64_t visit_LLIL_RRC(Emulator* emu, const LowLevelILInstruction* instr);
+uint64_t visit_LLIL_MULU_DP(Emulator* emu, const LowLevelILInstruction* instr);
+uint64_t visit_LLIL_MULS_DP(Emulator* emu, const LowLevelILInstruction* instr);
+uint64_t visit_LLIL_DIVU(Emulator* emu, const LowLevelILInstruction* instr);
+uint64_t visit_LLIL_DIVS(Emulator* emu, const LowLevelILInstruction* instr);
+uint64_t visit_LLIL_MODU(Emulator* emu, const LowLevelILInstruction* instr);
+uint64_t visit_LLIL_MODS(Emulator* emu, const LowLevelILInstruction* instr);
+uint64_t visit_LLIL_NOT(Emulator* emu, const LowLevelILInstruction* instr);
+uint64_t visit_LLIL_CALL_STACK_ADJUST(Emulator* emu, const LowLevelILInstruction* instr);
+uint64_t visit_LLIL_FLAG_COND(Emulator* emu, const LowLevelILInstruction* instr);
+uint64_t visit_LLIL_FLAG_GROUP(Emulator* emu, const LowLevelILInstruction* instr);
+uint64_t visit_LLIL_BOOL_TO_INT(Emulator* emu, const LowLevelILInstruction* instr);
+uint64_t visit_LLIL_ADD_OVERFLOW(Emulator* emu, const LowLevelILInstruction* instr);
+uint64_t visit_LLIL_SYSCALL(Emulator* emu, const LowLevelILInstruction* instr);
+uint64_t visit_LLIL_BP(Emulator* emu, const LowLevelILInstruction* instr);
+uint64_t visit_LLIL_TRAP(Emulator* emu, const LowLevelILInstruction* instr);
+uint64_t visit_LLIL_UNIMPL(Emulator* emu, const LowLevelILInstruction* instr);
+uint64_t visit_LLIL_UNIMPL_MEM(Emulator* emu, const LowLevelILInstruction* instr);
+uint64_t visit_LLIL_FADD(Emulator* emu, const LowLevelILInstruction* instr);
+uint64_t visit_LLIL_FSUB(Emulator* emu, const LowLevelILInstruction* instr);
+uint64_t visit_LLIL_FMUL(Emulator* emu, const LowLevelILInstruction* instr);
+uint64_t visit_LLIL_FDIV(Emulator* emu, const LowLevelILInstruction* instr);
+uint64_t visit_LLIL_FSQRT(Emulator* emu, const LowLevelILInstruction* instr);
+uint64_t visit_LLIL_FNEG(Emulator* emu, const LowLevelILInstruction* instr);
+uint64_t visit_LLIL_FABS(Emulator* emu, const LowLevelILInstruction* instr);
+uint64_t visit_LLIL_FLOAT_TO_INT(Emulator* emu, const LowLevelILInstruction* instr);
+uint64_t visit_LLIL_INT_TO_FLOAT(Emulator* emu, const LowLevelILInstruction* instr);
+uint64_t visit_LLIL_FLOAT_CONV(Emulator* emu, const LowLevelILInstruction* instr);
+uint64_t visit_LLIL_ROUND_TO_INT(Emulator* emu, const LowLevelILInstruction* instr);
+uint64_t visit_LLIL_FLOOR(Emulator* emu, const LowLevelILInstruction* instr);
+uint64_t visit_LLIL_CEIL(Emulator* emu, const LowLevelILInstruction* instr);
+uint64_t visit_LLIL_FTRUNC(Emulator* emu, const LowLevelILInstruction* instr);
+uint64_t visit_LLIL_FCMP_E(Emulator* emu, const LowLevelILInstruction* instr);
+uint64_t visit_LLIL_FCMP_NE(Emulator* emu, const LowLevelILInstruction* instr);
+uint64_t visit_LLIL_FCMP_LT(Emulator* emu, const LowLevelILInstruction* instr);
+uint64_t visit_LLIL_FCMP_LE(Emulator* emu, const LowLevelILInstruction* instr);
+uint64_t visit_LLIL_FCMP_GE(Emulator* emu, const LowLevelILInstruction* instr);
+uint64_t visit_LLIL_FCMP_GT(Emulator* emu, const LowLevelILInstruction* instr);
+uint64_t visit_LLIL_FCMP_O(Emulator* emu, const LowLevelILInstruction* instr);
+uint64_t visit_LLIL_FCMP_UO(Emulator* emu, const LowLevelILInstruction* instr);
+uint64_t visit_LLIL_CALL_PARAM(Emulator* emu, const LowLevelILInstruction* instr);
 
-// Helpers
-
-/*
+/* Helpers
  * Useful for evaluating arithmetic and comparison instructions that only have a LeftExpr and a RightExpr
  */
 uint64_t BinaryVisitorHelper(Emulator* emu, const LowLevelILInstruction* instr, const std::function<bool(uint64_t, uint64_t)>& condition);
 
-constexpr const char* const LLIL_NAME[] = {
-	"LLIL_NOP",
-	"LLIL_SET_REG",
-	"LLIL_SET_REG_SPLIT",
-	"LLIL_SET_FLAG",
-	"LLIL_SET_REG_STACK_REL",
-	"LLIL_REG_STACK_PUSH",
-	"LLIL_ASSERT",
-	"LLIL_FORCE_VER",
-	"LLIL_LOAD",
-	"LLIL_STORE",
-	"LLIL_PUSH",
-	"LLIL_POP",
-	"LLIL_REG",
-	"LLIL_REG_SPLIT",
-	"LLIL_REG_STACK_REL",
-	"LLIL_REG_STACK_POP",
-	"LLIL_REG_STACK_FREE_REG",
-	"LLIL_REG_STACK_FREE_REL",
-	"LLIL_CONST",
-	"LLIL_CONST_PTR",
-	"LLIL_EXTERN_PTR",
-	"LLIL_FLOAT_CONST",
-	"LLIL_FLAG",
-	"LLIL_FLAG_BIT",
-	"LLIL_ADD",
-	"LLIL_ADC",
-	"LLIL_SUB",
-	"LLIL_SBB",
-	"LLIL_AND",
-	"LLIL_OR",
-	"LLIL_XOR",
-	"LLIL_LSL",
-	"LLIL_LSR",
-	"LLIL_ASR",
-	"LLIL_ROL",
-	"LLIL_RLC",
-	"LLIL_ROR",
-	"LLIL_RRC",
-	"LLIL_MUL",
-	"LLIL_MULU_DP",
-	"LLIL_MULS_DP",
-	"LLIL_DIVU",
-	"LLIL_DIVU_DP",
-	"LLIL_DIVS",
-	"LLIL_DIVS_DP",
-	"LLIL_MODU",
-	"LLIL_MODU_DP",
-	"LLIL_MODS",
-	"LLIL_MODS_DP",
-	"LLIL_NEG",
-	"LLIL_NOT",
-	"LLIL_SX",
-	"LLIL_ZX",
-	"LLIL_LOW_PART",
-	"LLIL_JUMP",
-	"LLIL_JUMP_TO",
-	"LLIL_CALL",
-	"LLIL_CALL_STACK_ADJUST",
-	"LLIL_TAILCALL",
-	"LLIL_RET",
-	"LLIL_NORET",
-	"LLIL_IF",
-	"LLIL_GOTO",
-	"LLIL_FLAG_COND",
-	"LLIL_FLAG_GROUP",
-	"LLIL_CMP_E",
-	"LLIL_CMP_NE",
-	"LLIL_CMP_SLT",
-	"LLIL_CMP_ULT",
-	"LLIL_CMP_SLE",
-	"LLIL_CMP_ULE",
-	"LLIL_CMP_SGE",
-	"LLIL_CMP_UGE",
-	"LLIL_CMP_SGT",
-	"LLIL_CMP_UGT",
-	"LLIL_TEST_BIT",
-	"LLIL_BOOL_TO_INT",
-	"LLIL_ADD_OVERFLOW",
-	"LLIL_SYSCALL",
-	"LLIL_BP",
-	"LLIL_TRAP",
-	"LLIL_INTRINSIC",
-	"LLIL_UNDEF",
-	"LLIL_UNIMPL",
-	"LLIL_UNIMPL_MEM",
-	"LLIL_FADD",
-	"LLIL_FSUB",
-	"LLIL_FMUL",
-	"LLIL_FDIV",
-	"LLIL_FSQRT",
-	"LLIL_FNEG",
-	"LLIL_FABS",
-	"LLIL_FLOAT_TO_INT",
-	"LLIL_INT_TO_FLOAT",
-	"LLIL_FLOAT_CONV",
-	"LLIL_ROUND_TO_INT",
-	"LLIL_FLOOR",
-	"LLIL_CEIL",
-	"LLIL_FTRUNC",
-	"LLIL_FCMP_E",
-	"LLIL_FCMP_NE",
-	"LLIL_FCMP_LT",
-	"LLIL_FCMP_LE",
-	"LLIL_FCMP_GE",
-	"LLIL_FCMP_GT",
-	"LLIL_FCMP_O",
-	"LLIL_FCMP_UO"
-};
+constexpr const char* const LLIL_NAME[] = { "LLIL_NOP", "LLIL_SET_REG", "LLIL_SET_REG_SPLIT", "LLIL_SET_FLAG", "LLIL_SET_REG_STACK_REL", "LLIL_REG_STACK_PUSH", "LLIL_ASSERT", "LLIL_FORCE_VER", "LLIL_LOAD", "LLIL_STORE", "LLIL_PUSH", "LLIL_POP", "LLIL_REG", "LLIL_REG_SPLIT", "LLIL_REG_STACK_REL", "LLIL_REG_STACK_POP", "LLIL_REG_STACK_FREE_REG", "LLIL_REG_STACK_FREE_REL", "LLIL_CONST", "LLIL_CONST_PTR", "LLIL_EXTERN_PTR", "LLIL_FLOAT_CONST", "LLIL_FLAG", "LLIL_FLAG_BIT", "LLIL_ADD", "LLIL_ADC", "LLIL_SUB", "LLIL_SBB", "LLIL_AND", "LLIL_OR", "LLIL_XOR", "LLIL_LSL", "LLIL_LSR", "LLIL_ASR", "LLIL_ROL", "LLIL_RLC", "LLIL_ROR", "LLIL_RRC", "LLIL_MUL", "LLIL_MULU_DP", "LLIL_MULS_DP", "LLIL_DIVU", "LLIL_DIVU_DP", "LLIL_DIVS", "LLIL_DIVS_DP", "LLIL_MODU", "LLIL_MODU_DP", "LLIL_MODS", "LLIL_MODS_DP", "LLIL_NEG", "LLIL_NOT", "LLIL_SX", "LLIL_ZX", "LLIL_LOW_PART", "LLIL_JUMP", "LLIL_JUMP_TO", "LLIL_CALL", "LLIL_CALL_STACK_ADJUST", "LLIL_TAILCALL", "LLIL_RET", "LLIL_NORET", "LLIL_IF", "LLIL_GOTO", "LLIL_FLAG_COND", "LLIL_FLAG_GROUP", "LLIL_CMP_E", "LLIL_CMP_NE", "LLIL_CMP_SLT", "LLIL_CMP_ULT", "LLIL_CMP_SLE", "LLIL_CMP_ULE", "LLIL_CMP_SGE", "LLIL_CMP_UGE", "LLIL_CMP_SGT", "LLIL_CMP_UGT", "LLIL_TEST_BIT", "LLIL_BOOL_TO_INT", "LLIL_ADD_OVERFLOW", "LLIL_SYSCALL", "LLIL_BP", "LLIL_TRAP", "LLIL_INTRINSIC", "LLIL_UNDEF", "LLIL_UNIMPL", "LLIL_UNIMPL_MEM", "LLIL_FADD", "LLIL_FSUB", "LLIL_FMUL", "LLIL_FDIV", "LLIL_FSQRT", "LLIL_FNEG", "LLIL_FABS", "LLIL_FLOAT_TO_INT", "LLIL_INT_TO_FLOAT", "LLIL_FLOAT_CONV", "LLIL_ROUND_TO_INT", "LLIL_FLOOR", "LLIL_CEIL", "LLIL_FTRUNC", "LLIL_FCMP_E", "LLIL_FCMP_NE", "LLIL_FCMP_LT", "LLIL_FCMP_LE", "LLIL_FCMP_GE", "LLIL_FCMP_GT", "LLIL_FCMP_O", "LLIL_FCMP_UO" };
