@@ -51,7 +51,7 @@ uint64_t visit_LLIL_CMP_SGT(Emulator* emu, const LowLevelILInstruction* instr);
 uint64_t visit_LLIL_CMP_UGT(Emulator* emu, const LowLevelILInstruction* instr);
 uint64_t visit_LLIL_TEST_BIT(Emulator* emu, const LowLevelILInstruction* instr);
 uint64_t visit_LLIL_INTRINSIC(Emulator* emu, const LowLevelILInstruction* instr);
-uint64_t visit_LLIL_UNDEF(Emulator* emu, const LowLevelILInstruction* instr);
+uint64_t visit_LLIL_UNDEF(const Emulator* emu, const LowLevelILInstruction* instr);
 
 // Helpers
 

@@ -263,7 +263,9 @@ uint64_t visit_LLIL_ZX(Emulator* emu, const LowLevelILInstruction* instr)
 
 uint64_t visit_LLIL_LOW_PART(Emulator* emu, const LowLevelILInstruction* instr)
 {
-	emu->log->LogError("LLIL_LOW_PART @ 0x%08lx is unimplemented", instr->address);
+	// Check if we have to do something with size for this
+	const auto src_expr = instr->GetSourceExpr<LLIL_LOW_PART>();
+	emu->visit(&src_expr);
 	return -1;
 }
 
@@ -407,11 +409,11 @@ uint64_t visit_LLIL_INTRINSIC(Emulator* emu, const LowLevelILInstruction* instr)
 {
 	const auto handler = emu->get_intrinsic_handler(instr->GetIntrinsic<LLIL_INTRINSIC>());
 	handler(emu, instr);
-	return 0;
+	return 0; // Examine if we have to return outputs to work better with the dataflor APIs
 }
 
-uint64_t visit_LLIL_UNDEF(Emulator* emu, const LowLevelILInstruction* instr)
+uint64_t visit_LLIL_UNDEF(const Emulator* emu, const LowLevelILInstruction* instr)
 {
-	emu->log->LogError("LLIL_UNDEF @ 0x%08lx is unimplemented", instr->address);
-	return -1;
+	emu->log->LogError("LLIL_UNDEF Encountered. Unknown emulation side effects. Treating instruction as a NOP", instr->address);
+	return 0;
 }

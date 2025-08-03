@@ -14,7 +14,7 @@ int main(const int argc, char* argv[])
 	// of where bundled plugins directory is must be set.
 	SetBundledPluginDirectory(GetBundledPluginDirectory());
 	InitPlugins(true);
-	LogToStdout(DebugLog);
+	LogToStdout(InfoLog);
 
 	const Ref<BinaryView> bv = Load(argv[1], true);
 	bv->UpdateAnalysisAndWait();

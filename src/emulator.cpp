@@ -49,11 +49,7 @@ void Emulator::print_callstack()
 
 	for (int i = 0; !this->callstack.empty(); i++) {
 		const auto& currFrame = this->callstack.top();
-
-		// Get function name
 		const std::string funcName = currFrame.llilFunction->GetFunction()->GetSymbol()->GetFullName();
-
-		// Get address
 		const uint64_t address = currFrame.llilFunction->GetExpr(currFrame.curInstrIdx).address;
 
 		log->LogInfo("\t[%d] Name: %s | 0x%08llx", i, funcName.c_str(), address);
@@ -98,9 +94,9 @@ void Emulator::register_intrinsic_handler(const uint32_t intrinsic_idx, const st
 	this->intrinsic_handlers[intrinsic_idx] = handler;
 }
 
-std::function<void(Emulator* emu, const LowLevelILInstruction*)> Emulator::get_intrinsic_handler(const uint32_t intrinsic_idx)
+std::function<void(Emulator* emu, const LowLevelILInstruction*)> *Emulator::get_intrinsic_handler(const uint32_t intrinsic_idx)
 {
-	return this->intrinsic_handlers[intrinsic_idx];
+	return &this->intrinsic_handlers[intrinsic_idx];
 }
 
 bool Emulator::is_function_thunk(const uint64_t address) const
@@ -167,12 +163,9 @@ void Emulator::write_memory(const uint64_t address, const uint64_t value, const 
 
 void Emulator::reset_emulator()
 {
-	const auto arch = this->get_binary_view()->GetDefaultArchitecture();
-
-	for (const auto reg: arch->GetAllRegisters())
+	for (const auto arch = this->get_binary_view()->GetDefaultArchitecture(); const auto reg : arch->GetAllRegisters())
 		this->set_register(reg, 0);
-
-
+	// TODO reset writable memory
 }
 
 void Emulator::call_function(const uint64_t func_addr, const uint64_t retInstrIdx)
@@ -255,9 +248,64 @@ uint64_t Emulator::visit(const LowLevelILInstruction* instr)
 		case LLIL_TEST_BIT: ret = visit_LLIL_TEST_BIT(this, instr); break;
 		case LLIL_INTRINSIC: ret = visit_LLIL_INTRINSIC(this, instr); break;
 		case LLIL_UNDEF: ret = visit_LLIL_UNDEF(this, instr); break;
-		default: {
-			ret = -1;
-		}
+		case LLIL_SET_REG_STACK_REL: break;
+		case LLIL_REG_STACK_PUSH: break;
+		case LLIL_ASSERT: break;
+		case LLIL_FORCE_VER: break;
+		case LLIL_REG_STACK_REL: break;
+		case LLIL_REG_STACK_POP: break;
+		case LLIL_REG_STACK_FREE_REG: break;
+		case LLIL_REG_STACK_FREE_REL: break;
+		case LLIL_EXTERN_PTR: break;
+		case LLIL_FLOAT_CONST: break;
+		case LLIL_FLAG_BIT: break;
+		case LLIL_ADC: break;
+		case LLIL_ROL: break;
+		case LLIL_RLC: break;
+		case LLIL_ROR: break;
+		case LLIL_RRC: break;
+		case LLIL_MULU_DP: break;
+		case LLIL_MULS_DP: break;
+		case LLIL_DIVU: break;
+		case LLIL_DIVS: break;
+		case LLIL_MODU: break;
+		case LLIL_MODS: break;
+		case LLIL_NOT: break;
+		case LLIL_CALL_STACK_ADJUST: break;
+		case LLIL_FLAG_COND: break;
+		case LLIL_FLAG_GROUP: break;
+		case LLIL_BOOL_TO_INT: break;
+		case LLIL_ADD_OVERFLOW: break;
+		case LLIL_SYSCALL: break;
+		case LLIL_BP: break;
+		case LLIL_TRAP: break;
+		case LLIL_UNIMPL: break;
+		case LLIL_UNIMPL_MEM: break;
+		case LLIL_FADD: break;
+		case LLIL_FSUB: break;
+		case LLIL_FMUL: break;
+		case LLIL_FDIV: break;
+		case LLIL_FSQRT: break;
+		case LLIL_FNEG: break;
+		case LLIL_FABS: break;
+		case LLIL_FLOAT_TO_INT: break;
+		case LLIL_INT_TO_FLOAT: break;
+		case LLIL_FLOAT_CONV: break;
+		case LLIL_ROUND_TO_INT: break;
+		case LLIL_FLOOR: break;
+		case LLIL_CEIL: break;
+		case LLIL_FTRUNC: break;
+		case LLIL_FCMP_E: break;
+		case LLIL_FCMP_NE: break;
+		case LLIL_FCMP_LT: break;
+		case LLIL_FCMP_LE: break;
+		case LLIL_FCMP_GE: break;
+		case LLIL_FCMP_GT: break;
+		case LLIL_FCMP_O: break;
+		case LLIL_FCMP_UO: break;
+		case LLIL_SET_REG_SSA_PARTIAL: break;
+		case LLIL_CALL_PARAM: break;
+		default:;
 	}
 	return ret;
 }

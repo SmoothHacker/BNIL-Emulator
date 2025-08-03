@@ -57,5 +57,5 @@ public:
 
 	// This will override existing handlers
 	void register_intrinsic_handler(uint32_t intrinsic_idx, const std::function<void(Emulator* emu, const LowLevelILInstruction*)>& handler);
-	std::function<void(Emulator* emu, const LowLevelILInstruction*)> get_intrinsic_handler(uint32_t intrinsic_idx);
+	std::function<void(Emulator* emu, const LowLevelILInstruction*)> *get_intrinsic_handler(uint32_t intrinsic_idx);
 };
