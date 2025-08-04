@@ -432,9 +432,8 @@ uint64_t visit_LLIL_REG_STACK_PUSH(Emulator* emu, const LowLevelILInstruction* i
 
 uint64_t visit_LLIL_ASSERT(Emulator* emu, const LowLevelILInstruction* instr)
 {
-	const auto src_expr = instr->GetSourceExpr<LLIL_ASSERT>();
+	const auto src_expr = instr->GetSourceRegister<LLIL_ASSERT>();
 	auto constraint = instr->GetConstraint<LLIL_ASSERT>();
-	const auto src_value = emu->visit(&src_expr);
 	// TODO: figure out how to evaluate PVS
 	return -1;
 }

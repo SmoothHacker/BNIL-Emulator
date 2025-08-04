@@ -1,14 +1,13 @@
 #include <algorithm>
-#include <catch2/catch_test_macros.hpp>
 #include <cinttypes>
 #include <emulator.hpp>
 #include <string>
 #include <unicorn/unicorn.h>
 #include <vector>
 
-#include "registers.hpp"
+#include <gtest/gtest.h>
 
-namespace {
+#include "registers.hpp"
 
 void DumpState(uc_engine* uc)
 {
@@ -125,14 +124,23 @@ void CheckResults(Emulator* emu, uc_engine* uc)
 		const auto regId = arch->GetRegisterByName(regName);
 		const auto emuVal = emu->get_register(regId);
 		uc_reg_read(uc, ucRegIdx, &regValue);
-		log->LogDebug("Checking Register: %s", regName.c_str());
-		CHECK(emuVal == regValue);
+		EXPECT_EQ(emuVal, regValue) << "Register: [" << regName.c_str() << "] does not match";
 	}
 	uc_close(uc);
 }
-}
 
-TEST_CASE("BasicProgram1")
+class [[maybe_unused]] EmulatorTest : public testing::Test {
+protected:
+	EmulatorTest() {}
+
+	~EmulatorTest() override {}
+
+	void SetUp() override {}
+
+	void TearDown() override {}
+};
+
+TEST(EmulatorTest, BasicProgram1)
 {
 	const std::string input = "mov rcx, 0xdead;\n"
 							  "mov rdx, 0xbeef;\n"
@@ -151,7 +159,7 @@ TEST_CASE("BasicProgram1")
 	delete emu;
 }
 
-TEST_CASE("BasicProgram2")
+TEST(EmulatorTest, BasicProgram2)
 {
 	const std::string input = "mov rcx, 0xdead;\n"
 							  "mov dword [0x1000], 0xbeef;\n"
@@ -170,7 +178,7 @@ TEST_CASE("BasicProgram2")
 	delete emu;
 }
 
-TEST_CASE("BasicProgram3")
+TEST(EmulatorTest, BasicProgram3)
 {
 	const std::string input = "mov rcx, 0xdead;\n"
 							  "push rcx;\n"
@@ -187,4 +195,10 @@ TEST_CASE("BasicProgram3")
 		CheckResults(emu, uc);
 	}
 	delete emu;
+}
+
+int main(int argc, char **argv)
+{
+	testing::InitGoogleTest(&argc, argv);
+	return RUN_ALL_TESTS();
 }

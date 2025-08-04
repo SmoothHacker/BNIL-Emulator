@@ -4,8 +4,8 @@ project(bnil_emulator)
 
 # Create plugin executable target
 include_directories(src)
-add_library(libemulator src/emulator.cpp src/llil_visitor.cpp src/emulator.hpp src/llil_visitor.hpp)
-add_executable(bnil_emulator src/plugin.cpp)
+add_library(libemulator src/emulator.cpp src/llil_visitor.cpp src/emulator.hpp src/llil_visitor.hpp src/plugin.cpp)
+add_executable(bnil_emulator main.cpp)
 
 target_compile_features(bnil_emulator PRIVATE cxx_std_23)
 target_compile_features(libemulator PRIVATE cxx_std_23)
